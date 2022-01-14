@@ -9,26 +9,6 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get -y install --no-ins
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
-## Copy files
-COPY autoware.repos setup-dev-env.sh ansible-galaxy-requirements.yaml /autoware/
-COPY ansible/ /autoware/ansible/
-WORKDIR /autoware
-RUN ls /autoware
-
-## Add GitHub to known hosts for private repositories
-RUN mkdir -p ~/.ssh \
-  && ssh-keyscan github.com >> ~/.ssh/known_hosts
-
-## Setup development environment
-RUN --mount=type=ssh \
-  ./setup-dev-env.sh -y --no-nvidia universe \
-  && mkdir src \
-  && vcs import src < autoware.repos \
-  && rosdep update \
-  && DEBIAN_FRONTEND=noninteractive rosdep install -y --ignore-src --from-paths src --rosdistro galactic \
-  && apt-get clean \
-  && rm -rf /var/lib/apt/lists/*
-
 ## Install cuDNN and TensorRT
 ARG CUDNN_VERSION=8.2.2.26-1+cuda11.4
 ARG TENSORRT_VERSION=8.2.2-1+cuda11.4
@@ -43,6 +23,24 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get -y install --no-ins
   libnvonnxparsers-dev=$TENSORRT_VERSION \
   libnvparsers8=$TENSORRT_VERSION \
   libnvparsers-dev=$TENSORRT_VERSION \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
+
+## Copy files
+COPY autoware.repos setup-dev-env.sh ansible-galaxy-requirements.yaml /autoware/
+COPY ansible /autoware/ansible
+COPY src /autoware/src
+WORKDIR /autoware
+
+## Add GitHub to known hosts for private repositories
+RUN mkdir -p ~/.ssh \
+  && ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+## Setup development environment
+RUN --mount=type=ssh \
+  ./setup-dev-env.sh -y --no-nvidia universe \
+  && rosdep update \
+  && DEBIAN_FRONTEND=noninteractive rosdep install -y --ignore-src --from-paths src --rosdistro galactic \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
