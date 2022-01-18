@@ -33,6 +33,30 @@
     state: present
     update_cache: true
 
+- name: Add the kvaser-interface repository
+  ansible.builtin.apt_repository:
+    repo: ppa:astuff/kvaser-linux
+    state: present
+    update_cache: true
+
+- name: Add the autonomoustuff repository to source list
+  become: true
+  ansible.builtin.apt_repository:
+    repo: deb [trusted=yes] https://s3.amazonaws.com/autonomoustuff-repo/ focal main
+    filename: autonomoustuff
+    state: present
+    update_cache: true
+
+- name: Install kvaser-interface
+  become: true
+  ansible.builtin.apt:
+    name:
+      - kvaser-canlib-dev
+      - kvaser-drivers-dkms
+      - ros-galactic-kvaser-interface
+    state: latest
+    update_cache: true
+
 - name: Install ros-{{ rosdistro }}-{{ installation_type }}
   become: true
   ansible.builtin.apt:
