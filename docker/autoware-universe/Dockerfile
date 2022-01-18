@@ -26,6 +26,18 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get -y install --no-ins
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get -y install --no-install-recommends \
+  unzip \
+  wget \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
+
+RUN wget "https://download.pytorch.org/libtorch/cu113/libtorch-shared-with-deps-1.10.0%2Bcu113.zip" -O libtorch.zip \
+ && unzip libtorch.zip -d /usr/local/ \
+ && rm libtorch.zip
+
+ENV CUDA_HOME=/usr/local/cuda
+
 ## Copy files
 COPY autoware.repos setup-dev-env.sh ansible-galaxy-requirements.yaml /autoware/
 COPY ansible /autoware/ansible
