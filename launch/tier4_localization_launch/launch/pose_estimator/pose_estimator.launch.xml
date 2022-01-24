@@ -14,4 +14,10 @@
     <arg name="param_file" value="$(find-pkg-share tier4_localization_launch)/config/ndt_scan_matcher.param.yaml" />
   </include>
 
+  <include file="$(find-pkg-share lidar_feature_extraction)/launch/lidar_feature_extraction.launch.xml">
+    <arg name="input_sensor_points_topic" value="/sensing/lidar/top/rectified/pointcloud" />
+    <arg name="output_scan_edge_topic" value="/localization/pose_estimator/scan_edge" />
+    <arg name="output_scan_surface_topic" value="/localization/pose_estimator/scan_surface" />
+  </include>
+
 </launch>
