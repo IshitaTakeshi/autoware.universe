@@ -80,6 +80,13 @@
     <include file="$(find-pkg-share tier4_localization_launch)/launch/localization.launch.xml" if="$(var localization)">
     </include>
   </group>
+  <group>
+    <include file="$(find-pkg-share lidar_feature_extraction)/launch/lidar_feature_extraction.launch.xml">
+      <arg name="input_sensor_points_topic" value="/sensing/lidar/top/rectified/pointcloud" />
+      <arg name="output_scan_edge_topic" value="/localization/pose_estimator/scan_edge" />
+      <arg name="output_scan_surface_topic" value="/localization/pose_estimator/scan_surface" />
+    </include>
+  </group>
 
   <!-- Perception -->
   <group>
