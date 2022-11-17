@@ -64,7 +64,9 @@ std::tuple<Eigen::Quaterniond, Eigen::Vector3d> CalcUpdate(
 
 Eigen::VectorXd ComputeErrors(const std::vector<Eigen::VectorXd> & residuals);
 std::tuple<Eigen::VectorXd, double> NormalizeErrorScale(const Eigen::VectorXd & errors);
-Eigen::VectorXd ComputeWeights(const Eigen::VectorXd & scale_normalized_errors);
+Eigen::VectorXd ComputeWeights(
+  const Eigen::VectorXd & scale_normalized_errors,
+  const double huber_k);
 
 // Sola, Joan. Course on SLAM. Technical Report IRI-TR-16-04, Institut de Robòtica i, 2017.
 // Section 4.2.5
@@ -72,8 +74,11 @@ template<typename ProblemType, typename ArgumentType>
 class Optimizer
 {
 public:
-  explicit Optimizer(const ProblemType & problem, const int max_iter = 20)
-  : problem_(problem), max_iter_(max_iter)
+  explicit Optimizer(
+    const ProblemType & problem,
+    const int max_iter = 20,
+    const double huber_k = 1.345)
+  : problem_(problem), max_iter_(max_iter), huber_k_(huber_k)
   {
   }
 
@@ -109,7 +114,7 @@ public:
       }
       prev_scale = scale;
 
-      const Eigen::VectorXd weights = ComputeWeights(normalized);
+      const Eigen::VectorXd weights = ComputeWeights(normalized, huber_k_);
       const auto [dq, dt] = CalcUpdate(q, weights, jacobians, residuals);
 
       q = q * dq;
@@ -126,6 +131,7 @@ public:
 private:
   const ProblemType problem_;
   const int max_iter_;
+  const double huber_k_;
 };
 
 #endif  // LIDAR_FEATURE_LOCALIZATION__OPTIMIZER_HPP_

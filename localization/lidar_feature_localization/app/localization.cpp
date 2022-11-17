@@ -92,9 +92,10 @@ public:
   LocalizationNode(
     const pcl::PointCloud<pcl::PointXYZ>::Ptr & edge_map,
     const pcl::PointCloud<pcl::PointXYZ>::Ptr & surface_map,
-    const int max_iter)
+    const int max_iter,
+    const double huber_k)
   : Node("lidar_feature_extraction"),
-    localizer_(edge_map, surface_map, max_iter),
+    localizer_(edge_map, surface_map, max_iter, huber_k),
     tf_broadcaster_(*this),
     warning_(this),
     params_(HyperParameters(*this)),
@@ -231,9 +232,10 @@ int main(int argc, char * argv[])
   pcl::io::loadPCDFile(surface_map_path, *surface_map);
 
   constexpr int max_iter = 40;
+  constexpr double huber_k = 1.0;
 
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<LocalizationNode<PointXYZIRADT>>(edge_map, surface_map, max_iter));
+  rclcpp::spin(std::make_shared<LocalizationNode<PointXYZIRADT>>(edge_map, surface_map, max_iter, huber_k));
   rclcpp::shutdown();
   return 0;
 }

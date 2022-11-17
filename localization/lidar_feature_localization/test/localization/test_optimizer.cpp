@@ -70,6 +70,7 @@ TEST(Alignment, SimpleDatasetConvergenceCheck)
   using ArgumentType = std::tuple<Eigen::MatrixXd, Eigen::MatrixXd>;
 
   {
+    const double huber_k = 1.345;
     const AlignmentProblem problem;
 
     const Eigen::Quaterniond initial_q = Eigen::Quaterniond(1.1, -1.1, 1.1, -1.1).normalized();
@@ -81,7 +82,7 @@ TEST(Alignment, SimpleDatasetConvergenceCheck)
 
     const Eigen::VectorXd errors = ComputeErrors(residuals);
     const auto [normalized, scale] = NormalizeErrorScale(errors);
-    const Eigen::VectorXd weights = ComputeWeights(normalized);
+    const Eigen::VectorXd weights = ComputeWeights(normalized, huber_k);
     const auto [dq, dt] = CalcUpdate(initial_q, weights, jacobians, residuals);
 
     const Eigen::Isometry3d updated = MakeIsometry3d(initial_q * dq, initial_t + dt);

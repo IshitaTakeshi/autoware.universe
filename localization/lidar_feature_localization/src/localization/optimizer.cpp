@@ -118,12 +118,14 @@ std::tuple<Eigen::VectorXd, double> NormalizeErrorScale(const Eigen::VectorXd & 
   return std::make_tuple(normalized, scale);
 }
 
-Eigen::VectorXd ComputeWeights(const Eigen::VectorXd & scale_normalized_errors)
+Eigen::VectorXd ComputeWeights(
+  const Eigen::VectorXd & scale_normalized_errors,
+  const double huber_k)
 {
   // The stddev scale_normalized_errors should be close to 1.
   Eigen::VectorXd weights(scale_normalized_errors.size());
   for (int32_t i = 0; i < scale_normalized_errors.size(); i++) {
-    weights(i) = HuberDerivative(scale_normalized_errors(i));
+    weights(i) = HuberDerivative(scale_normalized_errors(i), huber_k);
   }
   return weights;
 }
