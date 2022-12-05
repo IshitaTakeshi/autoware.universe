@@ -26,6 +26,8 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
+#include <fmt/core.h>
+
 #include <rclcpp/rclcpp.hpp>
 
 #include <rcpputils/filesystem_helper.hpp>
@@ -213,6 +215,18 @@ bool CheckMapPathExists(const std::string & map_path)
   return exists;
 }
 
+pcl::PointCloud<pcl::PointXYZ>::Ptr LoadPointCloud(const std::string & path)
+{
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>());
+  const int loaded = pcl::io::loadPCDFile(path, *cloud);
+  if (loaded != 0) {
+    RCLCPP_ERROR(
+      rclcpp::get_logger("lidar_feature_localization"),
+      "Failed to load %s", path.c_str());
+  }
+  return cloud;
+}
+
 int main(int argc, char * argv[])
 {
   const std::string edge_map_path = "/map/edge.pcd";
@@ -226,12 +240,8 @@ int main(int argc, char * argv[])
     return -1;
   }
 
-  pcl::PointCloud<pcl::PointXYZ>::Ptr edge_map(new pcl::PointCloud<pcl::PointXYZ>());
-  pcl::io::loadPCDFile(edge_map_path, *edge_map);
-
-  pcl::PointCloud<pcl::PointXYZ>::Ptr surface_map(new pcl::PointCloud<pcl::PointXYZ>());
-  pcl::io::loadPCDFile(surface_map_path, *surface_map);
-
+  const auto edge_map = LoadPointCloud(edge_map_path);
+  const auto surface_map = LoadPointCloud(surface_map_path);
 
   constexpr int max_iter = 40;
   constexpr int n_neighbors = 40;
