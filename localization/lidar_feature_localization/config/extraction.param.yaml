@@ -1,0 +1,9 @@
+/**:
+  ros__parameters:
+    convolution_padding: 2
+    distance_diff_threshold: 0.3
+    parallel_beam_min_range_ratio: 0.02
+    edge_threshold: 10.0
+    min_range: 0.1
+    max_range: 1000.0
+    n_blocks: 6
