@@ -37,7 +37,7 @@ std::vector<size_t> RandomizedUniqueIndices(const size_t size)
 {
   std::vector<size_t> v(size);
   std::iota(v.begin(), v.end(), 0);
-  std::shuffle(v.begin(), v.end(), std::mt19937{std::random_device{} ()});
+  std::shuffle(v.begin(), v.end(), std::mt19937{std::random_device{}()});
   return v;
 }
 
