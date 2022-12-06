@@ -16,8 +16,9 @@ set(INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 set(LIBRARY_SOURCE_FILES
   src/lib/algorithm.cpp
-  src/lib/lib.cpp
+  src/lib/csv.cpp
   src/lib/eigen.cpp
+  src/lib/lib.cpp
   src/lib/pcl_utils.cpp
   src/lib/ros_msg.cpp
   src/lib/random.cpp
@@ -50,7 +51,7 @@ target_include_directories(library PUBLIC ${INCLUDE_DIRS})
 target_include_directories(localization PUBLIC ${INCLUDE_DIRS})
 target_include_directories(extraction PUBLIC ${INCLUDE_DIRS})
 
-target_link_libraries(library ${PCL_LIBRARIES})
+target_link_libraries(library ${PCL_LIBRARIES} fmt)
 target_link_libraries(localization fmt)
 target_link_libraries(extraction fmt)
 
