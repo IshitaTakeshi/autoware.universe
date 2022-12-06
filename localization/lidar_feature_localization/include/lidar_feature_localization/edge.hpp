@@ -92,18 +92,17 @@ public:
     // f(dx) \approx f(0) + J * dx + dx^T * H * dx
     // dx can be obtained by solving H * dx = -J
 
-    const Eigen::Quaterniond q(point_to_map.rotation());
-
     const size_t n = scan->size();
 
-    pcl::PointCloud<pcl::PointXYZ> transformed;
-    pcl::transformPointCloud<pcl::PointXYZ, double>(*scan, transformed, point_to_map);
+    const Eigen::Quaterniond q(point_to_map.rotation());
+
+    const auto transformed = TransformPointCloud<pcl::PointXYZ>(point_to_map, scan);
 
     std::vector<Eigen::MatrixXd> jacobians(n);
     std::vector<Eigen::VectorXd> residuals(n);
 
     for (size_t i = 0; i < n; i++) {
-      const pcl::PointXYZ query = transformed.at(i);
+      const pcl::PointXYZ query = transformed->at(i);
 
       const pcl::PointCloud<pcl::PointXYZ> neighbors = kdtree_.NearestKSearch(query, n_neighbors_);
 
