@@ -81,9 +81,9 @@ Matrix6d MakeCovariance()
     1.0, 0, 0, 0, 0, 0,
     0, 1.0, 0, 0, 0, 0,
     0, 0, 1.0, 0, 0, 0,
-    0, 0, 0, 0.1, 0, 0,
-    0, 0, 0, 0, 0.1, 0,
-    0, 0, 0, 0, 0, 0.1;
+    0, 0, 0, 1.0, 0, 0,
+    0, 0, 0, 0, 1.0, 0,
+    0, 0, 0, 0, 0, 1.0;
   return covariance;
 }
 
@@ -144,7 +144,7 @@ private:
   {
     warning_.Info("Received a cloud message");
     if (prior_poses_.Size() == 0) {
-      warning_.Warn("Received an edge message but there's no pose in the prior queue");
+      warning_.Warn("Received a cloud message but there's no pose in the prior queue");
       return;
     }
 
