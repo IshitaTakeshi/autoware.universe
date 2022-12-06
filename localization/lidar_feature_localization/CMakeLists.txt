@@ -82,6 +82,20 @@ function(add_extraction_testcase filepath)
   ament_target_dependencies(${test_name} ${${PROJECT_NAME}_FOUND_BUILD_DEPENDS})
 endfunction()
 
+function(add_lib_testcase filepath)
+  get_filename_component(filename ${filepath} NAME)
+  string(REGEX REPLACE ".cpp" "" test_name_suffix ${filename})
+  set(test_name "lib_${test_name_suffix}")
+
+  message("test_name_suffix = ${test_name_suffix}")
+  message("test_name = ${test_name}")
+  message("filepath = ${filepath}")
+
+  ament_add_gmock(${test_name} ${filepath})
+  target_link_libraries("${test_name}" library)
+  ament_target_dependencies(${test_name} ${${PROJECT_NAME}_FOUND_BUILD_DEPENDS})
+endfunction()
+
 if(BUILD_TESTING)
   file(GLOB
     FILES_TO_CHECK
@@ -137,6 +151,22 @@ if(BUILD_TESTING)
 
   foreach(filepath ${EXTRACTION_TEST_FILES})
     add_extraction_testcase(${filepath})
+  endforeach()
+
+  set(LIB_TEST_FILES
+    test/lib/test_algorithm.cpp
+    test/lib/test_csv.cpp
+    test/lib/test_degree_to_radian.cpp
+    test/lib/test_eigen.cpp
+    test/lib/test_numeric.cpp
+    test/lib/test_pcl_utils.cpp
+    test/lib/test_random.cpp
+    test/lib/test_ros_msg.cpp
+    test/lib/test_span.cpp
+    test/lib/test_stats.cpp)
+
+  foreach(filepath ${LIB_TEST_FILES})
+    add_lib_testcase(${filepath})
   endforeach()
 endif()
 
