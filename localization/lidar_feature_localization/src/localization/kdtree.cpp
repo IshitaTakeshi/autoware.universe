@@ -55,8 +55,6 @@ pcl::PointCloud<pcl::PointXYZ> KDTree::Get(const std::vector<int> & indices) con
 pcl::PointCloud<pcl::PointXYZ> KDTree::NearestKSearch(
   const pcl::PointXYZ & query, const size_t n_neighbors) const
 {
-  assert(map_.cols() == query.size());
-
   std::vector<int> indices(n_neighbors);
   std::vector<float> distances(n_neighbors);
 
