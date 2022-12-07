@@ -103,16 +103,7 @@ public:
 
     for (size_t i = 0; i < n; i++) {
       const pcl::PointXYZ query = transformed->at(i);
-
-      const pcl::PointCloud<pcl::PointXYZ> neighbors = kdtree_.NearestKSearch(query, n_neighbors_);
-
-      const Eigen::MatrixXd X = GetXYZ(neighbors);
-      const auto [mean, covariance] = CalcMeanAndCovariance(X);
-
-      Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> solver;
-      const Eigen::Matrix3d eigenvectors = solver.computeDirect(covariance).eigenvectors();
-
-      const Eigen::Vector3d principal = eigenvectors.col(2);
+      const auto [mean, principal] = this->MeanAndPrincipal(query);
       const Eigen::Vector3d p0 = PointXYZToVector::Convert(scan->at(i));
       const Eigen::Vector3d p1 = mean - principal;
       const Eigen::Vector3d p2 = mean + principal;
@@ -125,6 +116,19 @@ public:
   }
 
 private:
+  std::tuple<Eigen::VectorXd, Eigen::VectorXd> MeanAndPrincipal(const pcl::PointXYZ & query) const
+  {
+    const pcl::PointCloud<pcl::PointXYZ> neighbors = kdtree_.NearestKSearch(query, n_neighbors_);
+
+    const Eigen::MatrixXd X = GetXYZ(neighbors);
+    const auto [mean, covariance] = CalcMeanAndCovariance(X);
+
+    Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> solver;
+    const Eigen::Matrix3d eigenvectors = solver.computeDirect(covariance).eigenvectors();
+    const Eigen::Vector3d principal = eigenvectors.col(2);
+    return std::make_tuple(mean, principal);
+  }
+
   const KDTree kdtree_;
   const size_t n_neighbors_;
 };
