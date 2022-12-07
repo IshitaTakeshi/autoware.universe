@@ -93,15 +93,14 @@ class LocalizationNode : public rclcpp::Node
 public:
   LocalizationNode(
     const pcl::PointCloud<pcl::PointXYZ>::Ptr & edge_map,
-    const pcl::PointCloud<pcl::PointXYZ>::Ptr & surface_map,
-    const int max_iter,
-    const int n_neighbors,
-    const double huber_k)
+    const pcl::PointCloud<pcl::PointXYZ>::Ptr & surface_map)
   : Node("lidar_feature_extraction"),
-    localizer_(edge_map, surface_map, max_iter, n_neighbors, huber_k),
+    localizer_(
+      edge_map, surface_map, params_.max_iter,
+      params_.n_edge_neighbors, params_.n_surface_neighbors, params_.huber_k),
     tf_broadcaster_(*this),
     warning_(this),
-    params_(HyperParameters(*this)),
+    params_(HyperParameters(this)),
     extraction_(params_),
     cloud_subscriber_(
       this->create_subscription<sensor_msgs::msg::PointCloud2>(
@@ -119,8 +118,6 @@ public:
     pose_with_covariance_publisher_(
       this->create_publisher<PoseWithCovarianceStamped>("estimated_pose_with_covariance", 10))
   {
-    warning_.Info(fmt::format("edge threshold    = {}", params_.edge_threshold));
-    warning_.Info(fmt::format("surface threshold = {}", params_.surface_threshold));
     pcl::console::setVerbosityLevel(pcl::console::L_ERROR);
   }
 
@@ -243,13 +240,9 @@ int main(int argc, char * argv[])
   const auto edge_map = LoadPointCloud(edge_map_path);
   const auto surface_map = LoadPointCloud(surface_map_path);
 
-  constexpr int max_iter = 40;
-  constexpr int n_neighbors = 40;
-  constexpr double huber_k = 1.0;
-
   using Node = LocalizationNode<PointXYZIRADT>;
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<Node>(edge_map, surface_map, max_iter, n_neighbors, huber_k));
+  rclcpp::spin(std::make_shared<Node>(edge_map, surface_map));
   rclcpp::shutdown();
   return 0;
 }

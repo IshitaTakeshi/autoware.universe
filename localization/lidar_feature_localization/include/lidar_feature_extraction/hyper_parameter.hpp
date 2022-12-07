@@ -29,34 +29,37 @@
 #ifndef LIDAR_FEATURE_EXTRACTION__HYPER_PARAMETER_HPP_
 #define LIDAR_FEATURE_EXTRACTION__HYPER_PARAMETER_HPP_
 
+#include "lidar_feature_library/warning.hpp"
+
 struct HyperParameters
 {
-  explicit HyperParameters(rclcpp::Node & node)
-  : padding(node.declare_parameter("convolution_padding", 5)),
-    distance_diff_threshold(node.declare_parameter("distance_diff_threshold", 0.3)),
-    parallel_beam_min_range_ratio(node.declare_parameter("parallel_beam_min_range_ratio", 0.02)),
-    edge_threshold(node.declare_parameter("edge_threshold", 50.0)),
-    surface_threshold(node.declare_parameter("surface_threshold", 0.05)),
-    min_range(node.declare_parameter("min_range", 0.1)),
-    max_range(node.declare_parameter("max_range", 1000.0)),
-    n_blocks(node.declare_parameter("n_blocks", 6))
+  explicit HyperParameters(rclcpp::Node * node)
+  : warning_(node),
+    padding(node->declare_parameter("convolution_padding", 5)),
+    distance_diff_threshold(node->declare_parameter("distance_diff_threshold", 0.3)),
+    parallel_beam_min_range_ratio(node->declare_parameter("parallel_beam_min_range_ratio", 0.02)),
+    edge_threshold(node->declare_parameter("edge_threshold", 50.0)),
+    surface_threshold(node->declare_parameter("surface_threshold", 0.05)),
+    min_range(node->declare_parameter("min_range", 0.1)),
+    max_range(node->declare_parameter("max_range", 1000.0)),
+    n_blocks(node->declare_parameter("n_blocks", 6)),
+    max_iter(node->declare_parameter("max_iter", 40)),
+    n_edge_neighbors(node->declare_parameter("n_edge_neighbors", 10)),
+    n_surface_neighbors(node->declare_parameter("n_surface_neighbors", 20)),
+    huber_k(node->declare_parameter("huber_k", 1.345))
   {
-    RCLCPP_INFO(
-      node.get_logger(), "convolution_padding = %d", padding);
-    RCLCPP_INFO(
-      node.get_logger(), "distance_diff_threshold = %lf", distance_diff_threshold);
-    RCLCPP_INFO(
-      node.get_logger(), "parallel_beam_min_range_ratio = %lf", parallel_beam_min_range_ratio);
-    RCLCPP_INFO(
-      node.get_logger(), "edge_threshold = %lf", edge_threshold);
-    RCLCPP_INFO(
-      node.get_logger(), "surface_threshold = %lf", surface_threshold);
-    RCLCPP_INFO(
-      node.get_logger(), "min_range = %lf", min_range);
-    RCLCPP_INFO(
-      node.get_logger(), "max_range = %lf", max_range);
-    RCLCPP_INFO(
-      node.get_logger(), "n_blocks = %d", n_blocks);
+    warning_.Info(fmt::format("convolution_padding = {}", padding));
+    warning_.Info(fmt::format("distance_diff_threshold = {}", distance_diff_threshold));
+    warning_.Info(fmt::format("parallel_beam_min_range_ratio = {}", parallel_beam_min_range_ratio));
+    warning_.Info(fmt::format("edge_threshold = {}", edge_threshold));
+    warning_.Info(fmt::format("surface_threshold = {}", surface_threshold));
+    warning_.Info(fmt::format("min_range = {}", min_range));
+    warning_.Info(fmt::format("max_range = {}", max_range));
+    warning_.Info(fmt::format("n_blocks = {}", n_blocks));
+    warning_.Info(fmt::format("max_iter = {}", max_iter));
+    warning_.Info(fmt::format("n_edge_neighbors = {}", n_edge_neighbors));
+    warning_.Info(fmt::format("n_surface_neighbors = {}", n_surface_neighbors));
+    warning_.Info(fmt::format("huber_k = {}", huber_k));
 
     assert(padding > 0);
     assert(distance_diff_threshold > 0);
@@ -68,6 +71,7 @@ struct HyperParameters
     assert(n_blocks > 0);
   }
 
+  const Warning warning_;
   const int padding;
   const double distance_diff_threshold;
   const double parallel_beam_min_range_ratio;
@@ -76,6 +80,10 @@ struct HyperParameters
   const double min_range;
   const double max_range;
   const int n_blocks;
+  const int max_iter;
+  const int n_edge_neighbors;
+  const int n_surface_neighbors;
+  const double huber_k;
 };
 
 #endif  // LIDAR_FEATURE_EXTRACTION__HYPER_PARAMETER_HPP_

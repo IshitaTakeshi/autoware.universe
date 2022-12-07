@@ -53,8 +53,9 @@ public:
   LOAMOptimizationProblem(
     const pcl::PointCloud<pcl::PointXYZ>::Ptr & edge_map,
     const pcl::PointCloud<pcl::PointXYZ>::Ptr & surface_map,
-    const int n_neighbors)
-  : edge_(edge_map, n_neighbors), surface_(surface_map, n_neighbors)
+    const int n_edge_neighbors,
+    const int n_surface_neighbors)
+  : edge_(edge_map, n_edge_neighbors), surface_(surface_map, n_surface_neighbors)
   {
   }
 
