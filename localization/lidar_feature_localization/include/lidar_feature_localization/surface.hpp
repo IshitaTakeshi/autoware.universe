@@ -123,17 +123,12 @@ private:
     const Eigen::Isometry3d & point_to_map) const
   {
     const size_t n = scan->size();
-    const double nd = static_cast<double>(n);
-
-    std::vector<Eigen::MatrixXd> jacobians;
-    std::vector<Eigen::VectorXd> residuals;
-    if (n == 0) {
-      return std::make_tuple(jacobians, residuals);
-    }
 
     const Eigen::Quaterniond q(point_to_map.rotation());
     const auto transformed = TransformPointCloud<pcl::PointXYZ>(point_to_map, scan);
 
+    std::vector<Eigen::MatrixXd> jacobians;
+    std::vector<Eigen::VectorXd> residuals;
     for (size_t i = 0; i < n; i++) {
       const pcl::PointXYZ query = transformed->at(i);
 
@@ -150,10 +145,8 @@ private:
       const Eigen::Vector3d p = PointXYZToVector::Convert(scan->at(i));
       const Eigen::Vector3d g = PointXYZToVector::Convert(query);
 
-      const Eigen::MatrixXd jacobian = MakeJacobianRow(w, q, p) / nd;
-      const Eigen::VectorXd residual = SignedPointPlaneDistanceVector1d(w, g) / nd;
-      jacobians.push_back(jacobian);
-      residuals.push_back(residual);
+      jacobians.push_back(MakeJacobianRow(w, q, p));
+      residuals.push_back(SignedPointPlaneDistanceVector1d(w, g));
     }
 
     return std::make_tuple(jacobians, residuals);

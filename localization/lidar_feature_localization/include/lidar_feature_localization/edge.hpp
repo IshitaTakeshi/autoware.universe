@@ -98,22 +98,17 @@ public:
     // dx can be obtained by solving H * dx = -J
 
     const size_t n = scan->size();
-    const double nd = static_cast<double>(n);
+
+    const Eigen::Quaterniond q(point_to_map.rotation());
+
+    const auto transformed = TransformPointCloud<pcl::PointXYZ>(point_to_map, scan);
 
     std::vector<Eigen::MatrixXd> jacobians;
     std::vector<Eigen::VectorXd> residuals;
 
-    if (n == 0) {
-      return std::make_tuple(jacobians, residuals);
-    }
-
-    const Eigen::Quaterniond q(point_to_map.rotation());
-    const auto transformed = TransformPointCloud<pcl::PointXYZ>(point_to_map, scan);
-
     for (size_t i = 0; i < n; i++) {
       const pcl::PointXYZ query = transformed->at(i);
       const auto [mean, covariance] = this->NeighborMeanAndCovariance(query);
-
       const Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> ed = EigenDecomposition(covariance);
       const Eigen::Vector3d eigenvalues = ed.eigenvalues();
 
@@ -126,10 +121,8 @@ public:
       const Eigen::Vector3d p1 = mean - principal;
       const Eigen::Vector3d p2 = mean + principal;
 
-      const Eigen::MatrixXd jacobian = MakeEdgeJacobianRow(q, p0, p1, p2) / nd;
-      const Eigen::VectorXd residual = MakeEdgeResidual(point_to_map, p0, p1, p2) / nd;
-      jacobians.push_back(jacobian);
-      residuals.push_back(residual);
+      jacobians.push_back(MakeEdgeJacobianRow(q, p0, p1, p2));
+      residuals.push_back(MakeEdgeResidual(point_to_map, p0, p1, p2));
     }
 
     return std::make_tuple(jacobians, residuals);
@@ -143,6 +136,7 @@ public:
     return CalcMeanAndCovariance(X);
   }
 
+private:
   const KDTree kdtree_;
   const size_t n_neighbors_;
 };
