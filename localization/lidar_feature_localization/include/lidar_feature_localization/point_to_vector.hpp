@@ -72,6 +72,11 @@ class PointXYZToVector
 public:
   using PointType = pcl::PointXYZ;
 
+  static pcl::PointXYZ ToPoint(const Eigen::Vector3d & v)
+  {
+    return pcl::PointXYZ(v(0), v(1), v(2));
+  }
+
   static Eigen::VectorXd Convert(const pcl::PointXYZ & p)
   {
     return Eigen::Vector3d(p.x, p.y, p.z);

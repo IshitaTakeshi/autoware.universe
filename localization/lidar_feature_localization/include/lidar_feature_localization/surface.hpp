@@ -46,6 +46,7 @@
 
 const double plane_bias = 1.0;
 
+// TODO(IshitaTakeshi) Move the functions below to surface.cpp
 double SignedPointPlaneDistance(const Eigen::VectorXd & w, const Eigen::VectorXd & x)
 {
   assert(w.size() == x.size());
@@ -65,11 +66,13 @@ double PointPlaneDistance(const Eigen::VectorXd & w, const Eigen::VectorXd & x)
   return std::abs(SignedPointPlaneDistance(w, x));
 }
 
-bool CheckPointsDistributeAlongPlane(const Eigen::MatrixXd & X, const Eigen::VectorXd & w)
+bool CheckPointsDistributeAlongPlane(
+  const Eigen::MatrixXd & X, const Eigen::VectorXd & w,
+  const double threshold = 0.1)
 {
   for (int j = 0; j < X.rows(); j++) {
     const Eigen::VectorXd x = X.row(j);
-    if (PointPlaneDistance(w, x) > 0.2) {
+    if (PointPlaneDistance(w, x) > threshold) {
       return false;
     }
   }
@@ -105,8 +108,13 @@ public:
     const Eigen::Isometry3d & point_to_map) const
   {
     // TODO(IshitaTakeshi) Make the leaf size specifiable
-    const auto downsampled = Downsample<pcl::PointXYZ>(scan, 1.0);
-    return this->MakeFromDownsampled(downsampled, point_to_map);
+    // const auto downsampled = Downsample<pcl::PointXYZ>(scan, 1.0);
+    return this->MakeFromDownsampled(scan, point_to_map);
+  }
+
+  pcl::PointCloud<pcl::PointXYZ> NearestKSearch(const pcl::PointXYZ & query) const
+  {
+    return kdtree_.NearestKSearch(query, n_neighbors_);
   }
 
 private:
@@ -114,29 +122,38 @@ private:
     const pcl::PointCloud<pcl::PointXYZ>::Ptr & scan,
     const Eigen::Isometry3d & point_to_map) const
   {
+    const size_t n = scan->size();
+    const double nd = static_cast<double>(n);
+
+    std::vector<Eigen::MatrixXd> jacobians;
+    std::vector<Eigen::VectorXd> residuals;
+    if (n == 0) {
+      return std::make_tuple(jacobians, residuals);
+    }
+
     const Eigen::Quaterniond q(point_to_map.rotation());
-
-    const int n = scan->size();
-
     const auto transformed = TransformPointCloud<pcl::PointXYZ>(point_to_map, scan);
 
-    std::vector<Eigen::MatrixXd> jacobians(n);
-    std::vector<Eigen::VectorXd> residuals(n);
-
-    for (int i = 0; i < n; i++) {
+    for (size_t i = 0; i < n; i++) {
       const pcl::PointXYZ query = transformed->at(i);
 
-      const pcl::PointCloud<pcl::PointXYZ> neighbors = kdtree_.NearestKSearch(query, n_neighbors_);
+      const pcl::PointCloud<pcl::PointXYZ> neighbors = this->NearestKSearch(query);
 
       const Eigen::MatrixXd X = GetXYZ(neighbors);
 
       const Eigen::Vector3d w = EstimatePlaneCoefficients(X);
 
+      if (!CheckPointsDistributeAlongPlane(X, w)) {
+        continue;
+      }
+
       const Eigen::Vector3d p = PointXYZToVector::Convert(scan->at(i));
       const Eigen::Vector3d g = PointXYZToVector::Convert(query);
 
-      jacobians[i] = MakeJacobianRow(w, q, p);
-      residuals[i] = SignedPointPlaneDistanceVector1d(w, g);
+      const Eigen::MatrixXd jacobian = MakeJacobianRow(w, q, p) / nd;
+      const Eigen::VectorXd residual = SignedPointPlaneDistanceVector1d(w, g) / nd;
+      jacobians.push_back(jacobian);
+      residuals.push_back(residual);
     }
 
     return std::make_tuple(jacobians, residuals);

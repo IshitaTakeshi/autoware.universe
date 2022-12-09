@@ -32,6 +32,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
+#include <memory>
 #include <tuple>
 
 #include <rclcpp/rclcpp.hpp>
@@ -49,13 +50,9 @@ class Localizer
 
 public:
   explicit Localizer(
-    const pcl::PointCloud<pcl::PointXYZ>::Ptr & edge_map,
-    const pcl::PointCloud<pcl::PointXYZ>::Ptr & surface_map,
-    const int max_iter,
-    const int n_edge_neighbors,
-    const int n_surface_neighbors,
-    const double huber_k)
-  : problem_(edge_map, surface_map, n_edge_neighbors, n_surface_neighbors),
+    const std::shared_ptr<Edge> & edge, const std::shared_ptr<Surface> & surface,
+    const int max_iter, const double huber_k)
+  : problem_(edge, surface),
     optimizer_(problem_, max_iter, huber_k),
     is_initialized_(false),
     pose_(Eigen::Isometry3d::Identity())

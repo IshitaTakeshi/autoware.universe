@@ -100,3 +100,9 @@ Eigen::MatrixXd GetRows(
   }
   return A;
 }
+
+Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> EigenDecomposition(const Eigen::Matrix3d & C)
+{
+  Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> solver;
+  return solver.computeDirect(C);
+}

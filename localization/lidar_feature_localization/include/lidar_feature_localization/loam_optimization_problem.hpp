@@ -36,6 +36,7 @@
 #include <pcl/common/eigen.h>
 
 #include <algorithm>
+#include <memory>
 #include <tuple>
 #include <vector>
 
@@ -51,11 +52,8 @@ class LOAMOptimizationProblem
 {
 public:
   LOAMOptimizationProblem(
-    const pcl::PointCloud<pcl::PointXYZ>::Ptr & edge_map,
-    const pcl::PointCloud<pcl::PointXYZ>::Ptr & surface_map,
-    const int n_edge_neighbors,
-    const int n_surface_neighbors)
-  : edge_(edge_map, n_edge_neighbors), surface_(surface_map, n_surface_neighbors)
+    const std::shared_ptr<Edge> & edge, const std::shared_ptr<Surface> & surface)
+  : edge_(edge), surface_(surface)
   {
   }
 
@@ -65,8 +63,8 @@ public:
     const pcl::PointCloud<pcl::PointXYZ>::Ptr & edge_scan = std::get<0>(edge_surface_scan);
     const pcl::PointCloud<pcl::PointXYZ>::Ptr & surface_scan = std::get<1>(edge_surface_scan);
 
-    const auto edge = edge_.Make(edge_scan, point_to_map);
-    const auto surface = surface_.Make(surface_scan, point_to_map);
+    const auto edge = edge_->Make(edge_scan, point_to_map);
+    const auto surface = surface_->Make(surface_scan, point_to_map);
 
     const std::vector<Eigen::MatrixXd> edge_jacobian = std::get<0>(edge);
     const std::vector<Eigen::MatrixXd> surface_jacobian = std::get<0>(surface);
@@ -84,8 +82,8 @@ public:
   }
 
 private:
-  const Edge edge_;
-  const Surface surface_;
+  const std::shared_ptr<Edge> edge_;
+  const std::shared_ptr<Surface> surface_;
 };
 
 #endif  // LIDAR_FEATURE_LOCALIZATION__LOAM_OPTIMIZATION_PROBLEM_HPP_

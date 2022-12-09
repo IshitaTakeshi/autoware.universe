@@ -60,15 +60,6 @@ using PointCloud2 = sensor_msgs::msg::PointCloud2;
 using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
 using PoseStamped = geometry_msgs::msg::PoseStamped;
 
-inline rclcpp::SubscriptionOptions MutuallyExclusiveOption(rclcpp::Node & node)
-{
-  rclcpp::CallbackGroup::SharedPtr main_callback_group;
-  main_callback_group = node.create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  auto main_sub_opt = rclcpp::SubscriptionOptions();
-  main_sub_opt.callback_group = main_callback_group;
-  return main_sub_opt;
-}
-
 double Nanoseconds(const rclcpp::Time & t)
 {
   return static_cast<double>(t.nanoseconds());
@@ -87,6 +78,143 @@ Matrix6d MakeCovariance()
   return covariance;
 }
 
+double ComputeX(const Eigen::Vector3d & w, const double & y, const double & z)
+{
+  return -(1.0 / w(0)) * (w(1) * y + w(2) * z + 1);
+}
+
+double ComputeY(const Eigen::Vector3d & w, const double & z, const double & x)
+{
+  return -(1.0 / w(1)) * (w(2) * z + w(0) * x + 1);
+}
+
+double ComputeZ(const Eigen::Vector3d & w, const double & x, const double & y)
+{
+  return -(1.0 / w(2)) * (w(0) * x + w(1) * y + 1);
+}
+
+pcl::PointCloud<pcl::PointXYZ>::Ptr PlaneYZ(
+  const Eigen::Vector3d & w, const Eigen::Vector3d & mu, const int n)
+{
+  const double scale = 0.02;
+
+  pcl::PointCloud<pcl::PointXYZ>::Ptr plane(new pcl::PointCloud<pcl::PointXYZ>());
+  for (int iy = n; iy <= n; iy++) {
+    for (int iz = n; iz <= n; iz++) {
+      const double y = mu(1) + static_cast<double>(iy) * scale;
+      const double z = mu(2) + static_cast<double>(iz) * scale;
+      const double x = ComputeX(w, y, z);
+      plane->push_back(pcl::PointXYZ(x, y, z));
+    }
+  }
+  return plane;
+}
+
+pcl::PointCloud<pcl::PointXYZ>::Ptr PlaneZX(
+  const Eigen::Vector3d & w, const Eigen::Vector3d & mu, const int n)
+{
+  const double scale = 0.02;
+
+  pcl::PointCloud<pcl::PointXYZ>::Ptr plane(new pcl::PointCloud<pcl::PointXYZ>());
+  for (int iz = n; iz <= n; iz++) {
+    for (int ix = n; ix <= n; ix++) {
+      const double z = mu(2) + static_cast<double>(iz) * scale;
+      const double x = mu(0) + static_cast<double>(ix) * scale;
+      const double y = ComputeY(w, z, x);
+      plane->push_back(pcl::PointXYZ(x, y, z));
+    }
+  }
+  return plane;
+}
+
+pcl::PointCloud<pcl::PointXYZ>::Ptr PlaneXY(
+  const Eigen::Vector3d & w, const Eigen::Vector3d & mu, const int n)
+{
+  const double scale = 0.02;
+
+  pcl::PointCloud<pcl::PointXYZ>::Ptr plane(new pcl::PointCloud<pcl::PointXYZ>());
+  for (int ix = n; ix <= n; ix++) {
+    for (int iy = n; iy <= n; iy++) {
+      const double x = mu(0) + static_cast<double>(ix) * scale;
+      const double y = mu(1) + static_cast<double>(iy) * scale;
+      const double z = ComputeZ(w, x, y);
+      plane->push_back(pcl::PointXYZ(x, y, z));
+    }
+  }
+  return plane;
+}
+
+pcl::PointCloud<pcl::PointXYZ>::Ptr GeneratePlane(const Eigen::MatrixXd & X)
+{
+  const int n = 10;
+  const Eigen::Vector3d w = EstimatePlaneCoefficients(X);
+  const Eigen::Vector3d mu = X.colwise().mean();
+
+  if (!CheckPointsDistributeAlongPlane(X, w)) {
+    pcl::PointCloud<pcl::PointXYZ>::Ptr empty(new pcl::PointCloud<pcl::PointXYZ>());
+    return empty;
+  }
+
+  if (w(0) >= w(1) && w(0) >= w(2)) {
+    return PlaneYZ(w, mu, n);
+  }
+
+  if (w(1) >= w(2) && w(1) >= w(0)) {
+    return PlaneZX(w, mu, n);
+  }
+
+  if (w(2) >= w(0) && w(2) >= w(1)) {
+    return PlaneXY(w, mu, n);
+  }
+
+  assert(false);
+  return nullptr;
+}
+
+pcl::PointCloud<pcl::PointXYZ>::Ptr TargetSurfaceCloud(
+  const std::shared_ptr<Surface> & surface,
+  const Eigen::Isometry3d & point_to_map,
+  const pcl::PointCloud<pcl::PointXYZ>::Ptr & surface_scan)
+{
+  const auto transformed = TransformPointCloud<pcl::PointXYZ>(point_to_map, surface_scan);
+
+  pcl::PointCloud<pcl::PointXYZ>::Ptr plane(new pcl::PointCloud<pcl::PointXYZ>());
+  for (const pcl::PointXYZ & query : *transformed) {
+    const pcl::PointCloud<pcl::PointXYZ> neighbors = surface->NearestKSearch(query);
+    const Eigen::MatrixXd X = GetXYZ(neighbors);
+    *plane += *GeneratePlane(X);
+  }
+  return plane;
+}
+
+pcl::PointCloud<pcl::PointXYZ>::Ptr TargetEdgeCloud(
+  const std::shared_ptr<Edge> & edge,
+  const Eigen::Isometry3d & point_to_map,
+  const pcl::PointCloud<pcl::PointXYZ>::Ptr & edge_scan)
+{
+  const auto transformed = TransformPointCloud<pcl::PointXYZ>(point_to_map, edge_scan);
+
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>());
+  for (const pcl::PointXYZ & query : *transformed) {
+    const auto [mean, covariance] = edge->NeighborMeanAndCovariance(query);
+    const Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> ed = EigenDecomposition(covariance);
+    const Eigen::Vector3d eigenvalues = ed.eigenvalues();
+
+    if (IsEdge(eigenvalues)) {
+      continue;
+    }
+
+    const Eigen::Vector3d principal = ed.eigenvectors().col(2);
+
+    for (int i = -20; i <= 20; i++) {
+      const Eigen::Vector3d v = mean + 0.1 * static_cast<double>(i) * principal;
+      const pcl::PointXYZ p = PointXYZToVector::ToPoint(v);
+      cloud->push_back(p);
+    }
+  }
+  return cloud;
+}
+
 template<typename PointType>
 class LocalizationNode : public rclcpp::Node
 {
@@ -95,12 +223,12 @@ public:
     const pcl::PointCloud<pcl::PointXYZ>::Ptr & edge_map,
     const pcl::PointCloud<pcl::PointXYZ>::Ptr & surface_map)
   : Node("lidar_feature_extraction"),
-    localizer_(
-      edge_map, surface_map, params_.max_iter,
-      params_.n_edge_neighbors, params_.n_surface_neighbors, params_.huber_k),
+    params_(this),
+    edge_(std::make_shared<Edge>(edge_map, params_.n_edge_neighbors)),
+    surface_(std::make_shared<Surface>(surface_map, params_.n_surface_neighbors)),
+    localizer_(edge_, surface_, params_.max_iter, params_.huber_k),
     tf_broadcaster_(*this),
     warning_(this),
-    params_(HyperParameters(this)),
     extraction_(params_),
     cloud_subscriber_(
       this->create_subscription<sensor_msgs::msg::PointCloud2>(
@@ -109,11 +237,11 @@ public:
     optimization_start_pose_subscriber_(
       this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
         "optimization_start_pose", QOS_BEST_EFFORT_VOLATILE,
-        std::bind(
-          &LocalizationNode::OptimizationStartPoseCallback, this, std::placeholders::_1),
-        MutuallyExclusiveOption(*this))),
+        std::bind(&LocalizationNode::OptimizationStartPoseCallback, this, std::placeholders::_1))),
     edge_publisher_(this->create_publisher<PointCloud2>("edge_features", 10)),
     surface_publisher_(this->create_publisher<PointCloud2>("surface_features", 10)),
+    target_edge_publisher_(this->create_publisher<PointCloud2>("target_edge_features", 10)),
+    target_surface_publisher_(this->create_publisher<PointCloud2>("target_surface_features", 10)),
     pose_publisher_(this->create_publisher<PoseStamped>("estimated_pose", 10)),
     pose_with_covariance_publisher_(
       this->create_publisher<PoseWithCovarianceStamped>("estimated_pose_with_covariance", 10))
@@ -170,8 +298,13 @@ private:
 
     localizer_.Init(prior);
     localizer_.Update(std::make_tuple(edge, surface));
-
     const Eigen::Isometry3d pose = localizer_.Get();
+
+    const auto target_edges = TargetEdgeCloud(edge_, pose, edge);
+    const auto target_surfaces = TargetSurfaceCloud(surface_, pose, surface);
+    target_edge_publisher_->publish(ToRosMsg<pcl::PointXYZ>(target_edges, stamp, "map"));
+    target_surface_publisher_->publish(ToRosMsg<pcl::PointXYZ>(target_surfaces, stamp, "map"));
+
     pose_publisher_->publish(MakePoseStamped(pose, stamp, "map"));
 
     const Matrix6d covariance = MakeCovariance();
@@ -187,16 +320,20 @@ private:
     warning_.Info("Pose update done");
   }
 
+  const HyperParameters params_;
+  const std::shared_ptr<Edge> edge_;
+  const std::shared_ptr<Surface> surface_;
   Localizer localizer_;
   tf2_ros::TransformBroadcaster tf_broadcaster_;
   StampSortedObjects<Eigen::Isometry3d> prior_poses_;
   const Warning warning_;
-  const HyperParameters params_;
   const EdgeSurfaceExtraction<PointType> extraction_;
   const rclcpp::Subscription<PointCloud2>::SharedPtr cloud_subscriber_;
   const rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr optimization_start_pose_subscriber_;
   const rclcpp::Publisher<PointCloud2>::SharedPtr edge_publisher_;
   const rclcpp::Publisher<PointCloud2>::SharedPtr surface_publisher_;
+  const rclcpp::Publisher<PointCloud2>::SharedPtr target_edge_publisher_;
+  const rclcpp::Publisher<PointCloud2>::SharedPtr target_surface_publisher_;
   const rclcpp::Publisher<PoseStamped>::SharedPtr pose_publisher_;
   const rclcpp::Publisher<PoseWithCovarianceStamped>::SharedPtr pose_with_covariance_publisher_;
 };

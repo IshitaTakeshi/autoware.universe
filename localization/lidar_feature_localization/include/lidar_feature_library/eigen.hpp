@@ -30,6 +30,7 @@
 #define LIDAR_FEATURE_LIBRARY__EIGEN_HPP_
 
 #include <Eigen/Core>
+#include <Eigen/Eigenvalues>
 #include <Eigen/Geometry>
 
 #include <string>
@@ -75,5 +76,7 @@ std::string EigenToString(const Eigen::MatrixXd & matrix);
 Eigen::MatrixXd GetRows(
   const Eigen::MatrixXd & matrix,
   const std::vector<std::uint64_t> & indices);
+
+Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> EigenDecomposition(const Eigen::Matrix3d & C);
 
 #endif  // LIDAR_FEATURE_LIBRARY__EIGEN_HPP_

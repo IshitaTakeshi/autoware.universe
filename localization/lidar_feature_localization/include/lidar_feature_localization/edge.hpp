@@ -77,6 +77,11 @@ Eigen::MatrixXd GetXYZ(const pcl::PointCloud<pcl::PointXYZ> & map);
 
 bool PrincipalIsReliable(const Eigen::Vector3d & eigenvalues);
 
+inline bool IsEdge(const Eigen::Vector3d & eigenvalues, const double threshold = 5.0)
+{
+  return eigenvalues(2) < eigenvalues(1) * threshold;
+}
+
 class Edge
 {
 public:
@@ -93,40 +98,49 @@ public:
     // dx can be obtained by solving H * dx = -J
 
     const size_t n = scan->size();
+    const double nd = static_cast<double>(n);
+
+    std::vector<Eigen::MatrixXd> jacobians;
+    std::vector<Eigen::VectorXd> residuals;
+
+    if (n == 0) {
+      return std::make_tuple(jacobians, residuals);
+    }
 
     const Eigen::Quaterniond q(point_to_map.rotation());
-
     const auto transformed = TransformPointCloud<pcl::PointXYZ>(point_to_map, scan);
-
-    std::vector<Eigen::MatrixXd> jacobians(n);
-    std::vector<Eigen::VectorXd> residuals(n);
 
     for (size_t i = 0; i < n; i++) {
       const pcl::PointXYZ query = transformed->at(i);
-      const auto [mean, principal] = this->MeanAndPrincipal(query);
+      const auto [mean, covariance] = this->NeighborMeanAndCovariance(query);
+
+      const Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> ed = EigenDecomposition(covariance);
+      const Eigen::Vector3d eigenvalues = ed.eigenvalues();
+
+      if (IsEdge(eigenvalues)) {
+        continue;
+      }
+
+      const Eigen::Vector3d principal = ed.eigenvectors().col(2);
       const Eigen::Vector3d p0 = PointXYZToVector::Convert(scan->at(i));
       const Eigen::Vector3d p1 = mean - principal;
       const Eigen::Vector3d p2 = mean + principal;
 
-      jacobians[i] = MakeEdgeJacobianRow(q, p0, p1, p2);
-      residuals[i] = MakeEdgeResidual(point_to_map, p0, p1, p2);
+      const Eigen::MatrixXd jacobian = MakeEdgeJacobianRow(q, p0, p1, p2) / nd;
+      const Eigen::VectorXd residual = MakeEdgeResidual(point_to_map, p0, p1, p2) / nd;
+      jacobians.push_back(jacobian);
+      residuals.push_back(residual);
     }
 
     return std::make_tuple(jacobians, residuals);
   }
 
-private:
-  std::tuple<Eigen::VectorXd, Eigen::VectorXd> MeanAndPrincipal(const pcl::PointXYZ & query) const
+  std::tuple<Eigen::VectorXd, Eigen::MatrixXd> NeighborMeanAndCovariance(
+    const pcl::PointXYZ & query) const
   {
     const pcl::PointCloud<pcl::PointXYZ> neighbors = kdtree_.NearestKSearch(query, n_neighbors_);
-
     const Eigen::MatrixXd X = GetXYZ(neighbors);
-    const auto [mean, covariance] = CalcMeanAndCovariance(X);
-
-    Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> solver;
-    const Eigen::Matrix3d eigenvectors = solver.computeDirect(covariance).eigenvectors();
-    const Eigen::Vector3d principal = eigenvectors.col(2);
-    return std::make_tuple(mean, principal);
+    return CalcMeanAndCovariance(X);
   }
 
   const KDTree kdtree_;
