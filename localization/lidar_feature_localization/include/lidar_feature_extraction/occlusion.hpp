@@ -29,6 +29,7 @@
 #ifndef LIDAR_FEATURE_EXTRACTION__OCCLUSION_HPP_
 #define LIDAR_FEATURE_EXTRACTION__OCCLUSION_HPP_
 
+#include <algorithm>
 #include <vector>
 
 #include "lidar_feature_extraction/label.hpp"
@@ -38,15 +39,17 @@ template<typename PointT>
 void FromLeft(
   std::vector<PointLabel> & labels,
   const Range<PointT> & range,
-  const unsigned int padding,
+  const int padding,
   const double distance_diff_threshold)
 {
-  for (unsigned int i = 0; i < labels.size() - padding - 1; i++) {
+  const int size = static_cast<int>(labels.size());
+  for (int i = 0; i < size - 1; i++) {
     const double range0 = range(i + 0);
     const double range1 = range(i + 1);
 
     if (range1 > range0 + distance_diff_threshold) {
-      FillFromLeft(labels, i + 1, i + padding + 2, PointLabel::Occluded);
+      const int k = std::min(i + padding + 2, size);
+      FillFromLeft(labels, i + 1, k, PointLabel::Occluded);
     }
   }
 }
@@ -55,15 +58,16 @@ template<typename PointT>
 void FromRight(
   std::vector<PointLabel> & labels,
   const Range<PointT> & range,
-  const unsigned int padding,
+  const int padding,
   const double distance_diff_threshold)
 {
-  for (unsigned int i = labels.size() - 1; i >= padding + 1; i--) {
+  for (int i = labels.size() - 1; i > 0; i--) {
     const double range1 = range(i - 1);
     const double range0 = range(i - 0);
 
     if (range1 > range0 + distance_diff_threshold) {
-      FillFromRight(labels, i - padding - 2, i - 1, PointLabel::Occluded);
+      const int k = std::max(i - padding - 2, -1);
+      FillFromRight(labels, k, i - 1, PointLabel::Occluded);
     }
   }
 }
@@ -72,7 +76,7 @@ template<typename PointT>
 void LabelOccludedPoints(
   std::vector<PointLabel> & labels,
   const Range<PointT> & range,
-  const unsigned int padding,
+  const int padding,
   const double distance_diff_threshold)
 {
   FromLeft(labels, range, padding, distance_diff_threshold);

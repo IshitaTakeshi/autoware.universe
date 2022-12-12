@@ -106,22 +106,21 @@ TEST(Label, FromLeft)
           PointLabel::Occluded));
     }
 
-    // TODO(IshitaTakeshi) make this pass
-    // {
-    //   std::vector<PointLabel> labels = InitLabels(ref_points.size());
-    //   LabelOccludedPoints<pcl::PointXYZ>(labels, range, 3, distance_diff_threshold);
+    {
+      std::vector<PointLabel> labels = InitLabels(ref_points.size());
+      LabelOccludedPoints<pcl::PointXYZ>(labels, range, 3, distance_diff_threshold);
 
-    //   EXPECT_THAT(
-    //     labels,
-    //     testing::ElementsAre(
-    //       PointLabel::Default,
-    //       PointLabel::Default,
-    //       PointLabel::Default,
-    //       PointLabel::Default,
-    //       PointLabel::Occluded,
-    //       PointLabel::Occluded,
-    //       PointLabel::Occluded));
-    // }
+      EXPECT_THAT(
+        labels,
+        testing::ElementsAre(
+          PointLabel::Default,
+          PointLabel::Default,
+          PointLabel::Default,
+          PointLabel::Default,
+          PointLabel::Occluded,
+          PointLabel::Occluded,
+          PointLabel::Occluded));
+    }
   }
 }
 
@@ -148,11 +147,22 @@ TEST(Label, FromRight)
           PointLabel::Occluded,
           PointLabel::Default));
     }
+
+    {
+      std::vector<PointLabel> labels = InitLabels(ref_points.size());
+      LabelOccludedPoints<pcl::PointXYZ>(labels, range, 3, distance_diff_threshold);
+      EXPECT_THAT(
+        labels,
+        testing::ElementsAre(
+          PointLabel::Occluded,
+          PointLabel::Occluded,
+          PointLabel::Occluded,
+          PointLabel::Default));
+    }
   }
 
   {
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>());
-    cloud->push_back(pcl::PointXYZ(8.04, 2.0, 0.0));
     cloud->push_back(pcl::PointXYZ(8.05, 2.0, 0.0));
     cloud->push_back(pcl::PointXYZ(8.06, 2.0, 0.0));
     cloud->push_back(pcl::PointXYZ(8.07, 2.0, 0.0));
@@ -173,7 +183,6 @@ TEST(Label, FromRight)
         testing::ElementsAre(
           PointLabel::Default,
           PointLabel::Default,
-          PointLabel::Default,
           PointLabel::Occluded,
           PointLabel::Occluded,
           PointLabel::Default,
@@ -188,7 +197,21 @@ TEST(Label, FromRight)
       EXPECT_THAT(
         labels,
         testing::ElementsAre(
+          PointLabel::Occluded,
+          PointLabel::Occluded,
+          PointLabel::Occluded,
+          PointLabel::Occluded,
           PointLabel::Default,
+          PointLabel::Default,
+          PointLabel::Default,
+          PointLabel::Default));
+    }
+    {
+      std::vector<PointLabel> labels = InitLabels(ref_points.size());
+      LabelOccludedPoints<pcl::PointXYZ>(labels, range, 4, distance_diff_threshold);
+      EXPECT_THAT(
+        labels,
+        testing::ElementsAre(
           PointLabel::Occluded,
           PointLabel::Occluded,
           PointLabel::Occluded,
