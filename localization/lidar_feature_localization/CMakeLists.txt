@@ -114,20 +114,21 @@ if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
 
   set(LOCALIZATION_TEST_FILES
-    test/localization/test_posevec.cpp
-    test/localization/test_optimizer.cpp
-    test/localization/test_jacobian.cpp
+    test/localization/test_alignment.cpp
+    test/localization/test_degenerate.cpp
     test/localization/test_edge.cpp
+    test/localization/test_filter.cpp
+    test/localization/test_jacobian.cpp
+    test/localization/test_kdtree.cpp
+    test/localization/test_math.cpp
+    test/localization/test_odometry.cpp
+    test/localization/test_optimizer.cpp
+    test/localization/test_pointcloud_to_matrix.cpp
+    test/localization/test_posevec.cpp
     test/localization/test_recent_scans.cpp
     test/localization/test_robust.cpp
-    test/localization/test_kdtree.cpp
-    test/localization/test_degenerate.cpp
-    test/localization/test_odometry.cpp
-    test/localization/test_pointcloud_to_matrix.cpp
     test/localization/test_stamp_sorted_objects.cpp
-    test/localization/test_filter.cpp
-    test/localization/test_math.cpp
-    test/localization/test_alignment.cpp)
+    test/localization/test_surface.cpp)
 
   foreach(filepath ${LOCALIZATION_TEST_FILES})
     add_localization_testcase(${filepath})
