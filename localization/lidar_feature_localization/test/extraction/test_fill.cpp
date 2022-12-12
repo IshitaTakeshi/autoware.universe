@@ -69,35 +69,6 @@ TEST(Label, FillFromLeft)
         PointLabel::Edge,
         PointLabel::Edge));
   }
-
-  {
-    std::vector<PointLabel> labels = InitLabels(3);
-
-    FillFromLeft(labels, 1, 3, PointLabel::Default);
-
-    EXPECT_THROW(
-      try {
-      FillFromLeft(labels, 1, 4, PointLabel::Default);
-    } catch (const std::invalid_argument & e) {
-      EXPECT_STREQ("end_index (which is 4) > labels.size() (which is 3)", e.what());
-      throw e;
-    }
-      ,
-      std::invalid_argument
-    );
-
-    FillFromLeft(labels, 0, 2, PointLabel::Default);
-    EXPECT_THROW(
-      try {
-      FillFromLeft(labels, -1, 2, PointLabel::Default);
-    } catch (const std::invalid_argument & e) {
-      EXPECT_STREQ("begin_index (which is -1) < 0 (which is 0)", e.what());
-      throw e;
-    }
-      ,
-      std::invalid_argument
-    );
-  }
 }
 
 TEST(Label, FillFromRight)
@@ -145,34 +116,6 @@ TEST(Label, FillFromRight)
         PointLabel::Edge,
         PointLabel::Edge,
         PointLabel::Edge));
-  }
-
-  {
-    std::vector<PointLabel> labels = InitLabels(3);
-
-    FillFromRight(labels, 1, 2, PointLabel::Default);
-    EXPECT_THROW(
-      try {
-      FillFromRight(labels, 1, 3, PointLabel::Default);
-    } catch (const std::invalid_argument & e) {
-      EXPECT_STREQ("end_index (which is 3) >= labels.size() (which is 3)", e.what());
-      throw e;
-    }
-      ,
-      std::invalid_argument
-    );
-
-    FillFromRight(labels, -1, 2, PointLabel::Default);
-    EXPECT_THROW(
-      try {
-      FillFromRight(labels, -2, 2, PointLabel::Default);
-    } catch (const std::invalid_argument & e) {
-      EXPECT_STREQ("begin_index (which is -2) < -1 (which is -1)", e.what());
-      throw e;
-    }
-      ,
-      std::invalid_argument
-    );
   }
 }
 

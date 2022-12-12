@@ -44,15 +44,8 @@ void FillFromLeft(
   const int end_index,
   const PointLabel & label)
 {
-  if (end_index > static_cast<int>(labels.size())) {
-    auto s = RangeMessageLargerThan("end_index", "labels.size()", end_index, labels.size());
-    throw std::invalid_argument(s);
-  }
-
-  if (begin_index < 0) {
-    auto s = RangeMessageSmallerThan("begin_index", "0", begin_index, 0);
-    throw std::invalid_argument(s);
-  }
+  assert(end_index <= static_cast<int>(labels.size()));
+  assert(begin_index >= 0);
 
   for (int i = begin_index; i < end_index; i++) {
     labels.at(i) = label;
@@ -66,16 +59,8 @@ void FillFromRight(
   const int end_index,
   const PointLabel & label)
 {
-  if (end_index >= static_cast<int>(labels.size())) {
-    auto s = RangeMessageLargerThanOrEqualTo(
-      "end_index", "labels.size()", end_index, labels.size());
-    throw std::invalid_argument(s);
-  }
-
-  if (begin_index < -1) {
-    auto s = RangeMessageSmallerThan("begin_index", "-1", begin_index, -1);
-    throw std::invalid_argument(s);
-  }
+  assert(end_index <= static_cast<int>(labels.size()));
+  assert(begin_index >= -1);
 
   for (int i = end_index; i > begin_index; i--) {
     labels.at(i) = label;
