@@ -30,6 +30,9 @@
 #ifndef LIDAR_FEATURE_LOCALIZATION__EDGE_HPP_
 #define LIDAR_FEATURE_LOCALIZATION__EDGE_HPP_
 
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+
 #include <Eigen/Core>
 
 #include <algorithm>
@@ -74,8 +77,6 @@ Eigen::Vector3d MakeEdgeResidual(
   const Eigen::Vector3d & p2);
 
 Eigen::MatrixXd GetXYZ(const pcl::PointCloud<pcl::PointXYZ> & map);
-
-bool PrincipalIsReliable(const Eigen::Vector3d & eigenvalues);
 
 inline bool IsEdge(const Eigen::Vector3d & eigenvalues, const double threshold = 5.0)
 {

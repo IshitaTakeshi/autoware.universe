@@ -32,6 +32,7 @@
 
 #include "lidar_feature_library/algorithm.hpp"
 
+#include "lidar_feature_localization/eigen.hpp"
 #include "lidar_feature_localization/edge.hpp"
 
 
@@ -82,19 +83,4 @@ Eigen::Vector3d MakeEdgeResidual(
 {
   const Eigen::Vector3d p = transform * p0;
   return (p - p1).cross(p - p2);
-}
-
-Eigen::MatrixXd GetXYZ(const pcl::PointCloud<pcl::PointXYZ> & map)
-{
-  Eigen::MatrixXd X(map.size(), 3);
-  for (size_t i = 0; i < map.size(); i++) {
-    X.row(i) = PointXYZToVector::Convert(map.at(i));
-  }
-  return X;
-}
-
-bool PrincipalIsReliable(const Eigen::Vector3d & eigenvalues)
-{
-  const Eigen::Vector3d sorted = SortThreeValues(eigenvalues);
-  return sorted(2) > sorted(1) * 3.0;
 }
