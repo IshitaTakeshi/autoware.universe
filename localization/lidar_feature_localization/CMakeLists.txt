@@ -32,6 +32,7 @@ set(LOCALIZATION_SOURCE_FILES
   src/localization/jacobian.cpp
   src/localization/kdtree.cpp
   src/localization/optimizer.cpp
+  src/localization/surface.cpp
   src/localization/posevec.cpp)
 
 set(EXTRACTION_SOURCE_FILES

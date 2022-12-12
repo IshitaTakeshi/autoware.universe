@@ -34,123 +34,41 @@
 #include <tuple>
 #include <vector>
 
-#include "lidar_feature_library/downsample.hpp"
-#include "lidar_feature_library/eigen.hpp"
-#include "lidar_feature_library/pcl_utils.hpp"
-
-#include "lidar_feature_localization/filter.hpp"
-#include "lidar_feature_localization/jacobian.hpp"
 #include "lidar_feature_localization/kdtree.hpp"
-#include "lidar_feature_localization/math.hpp"
-#include "lidar_feature_localization/matrix_type.hpp"
 
-const double plane_bias = 1.0;
-
-// TODO(IshitaTakeshi) Move the functions below to surface.cpp
-double SignedPointPlaneDistance(const Eigen::VectorXd & w, const Eigen::VectorXd & x)
-{
-  assert(w.size() == x.size());
-  return (w.dot(x) + plane_bias) / w.norm();
-}
+double SignedPointPlaneDistance(const Eigen::VectorXd & w, const Eigen::VectorXd & x);
 
 Eigen::VectorXd SignedPointPlaneDistanceVector1d(
-  const Eigen::VectorXd & w, const Eigen::VectorXd & x)
-{
-  Eigen::VectorXd d(1);
-  d(0) = SignedPointPlaneDistance(w, x);
-  return d;
-}
+  const Eigen::VectorXd & w, const Eigen::VectorXd & x);
 
-double PointPlaneDistance(const Eigen::VectorXd & w, const Eigen::VectorXd & x)
-{
-  return std::abs(SignedPointPlaneDistance(w, x));
-}
+double PointPlaneDistance(const Eigen::VectorXd & w, const Eigen::VectorXd & x);
 
 bool CheckPointsDistributeAlongPlane(
   const Eigen::MatrixXd & X, const Eigen::VectorXd & w,
-  const double threshold = 0.1)
-{
-  for (int j = 0; j < X.rows(); j++) {
-    const Eigen::VectorXd x = X.row(j);
-    if (PointPlaneDistance(w, x) > threshold) {
-      return false;
-    }
-  }
-  return true;
-}
+  const double threshold = 0.1);
 
-Eigen::VectorXd EstimatePlaneCoefficients(const Eigen::MatrixXd & X)
-{
-  const Eigen::VectorXd g = Eigen::VectorXd::Constant(X.rows(), -plane_bias);
-  return SolveLinear(X, g);
-}
+Eigen::VectorXd EstimatePlaneCoefficients(const Eigen::MatrixXd & X);
 
 Eigen::Matrix<double, 1, 7> MakeJacobianRow(
   const Eigen::Vector3d & w,
   const Eigen::Quaterniond & q,
-  const Eigen::Vector3d & p)
-{
-  const Eigen::Matrix<double, 3, 4> drpdq = rotationlib::DRpDq(q, p);
-  const Eigen::Vector3d u = w / w.norm();
-  return (Eigen::Matrix<double, 1, 7>() << u.transpose() * drpdq, u.transpose()).finished();
-}
+  const Eigen::Vector3d & p);
 
 class Surface
 {
 public:
-  Surface(const pcl::PointCloud<pcl::PointXYZ>::Ptr & surface_map, const int n_neighbors)
-  : kdtree_(surface_map), n_neighbors_(n_neighbors)
-  {
-  }
+  Surface(const pcl::PointCloud<pcl::PointXYZ>::Ptr & surface_map, const int n_neighbors);
 
   std::tuple<std::vector<Eigen::MatrixXd>, std::vector<Eigen::VectorXd>> Make(
     const pcl::PointCloud<pcl::PointXYZ>::Ptr & scan,
-    const Eigen::Isometry3d & point_to_map) const
-  {
-    // TODO(IshitaTakeshi) Make the leaf size specifiable
-    // const auto downsampled = Downsample<pcl::PointXYZ>(scan, 1.0);
-    return this->MakeFromDownsampled(scan, point_to_map);
-  }
+    const Eigen::Isometry3d & point_to_map) const;
 
-  pcl::PointCloud<pcl::PointXYZ> NearestKSearch(const pcl::PointXYZ & query) const
-  {
-    return kdtree_.NearestKSearch(query, n_neighbors_);
-  }
+  pcl::PointCloud<pcl::PointXYZ> NearestKSearch(const pcl::PointXYZ & query) const;
 
 private:
   std::tuple<std::vector<Eigen::MatrixXd>, std::vector<Eigen::VectorXd>> MakeFromDownsampled(
     const pcl::PointCloud<pcl::PointXYZ>::Ptr & scan,
-    const Eigen::Isometry3d & point_to_map) const
-  {
-    const size_t n = scan->size();
-
-    const Eigen::Quaterniond q(point_to_map.rotation());
-    const auto transformed = TransformPointCloud<pcl::PointXYZ>(point_to_map, scan);
-
-    std::vector<Eigen::MatrixXd> jacobians;
-    std::vector<Eigen::VectorXd> residuals;
-    for (size_t i = 0; i < n; i++) {
-      const pcl::PointXYZ query = transformed->at(i);
-
-      const pcl::PointCloud<pcl::PointXYZ> neighbors = this->NearestKSearch(query);
-
-      const Eigen::MatrixXd X = GetXYZ(neighbors);
-
-      const Eigen::Vector3d w = EstimatePlaneCoefficients(X);
-
-      if (!CheckPointsDistributeAlongPlane(X, w)) {
-        continue;
-      }
-
-      const Eigen::Vector3d p = PointXYZToVector::Convert(scan->at(i));
-      const Eigen::Vector3d g = PointXYZToVector::Convert(query);
-
-      jacobians.push_back(MakeJacobianRow(w, q, p));
-      residuals.push_back(SignedPointPlaneDistanceVector1d(w, g));
-    }
-
-    return std::make_tuple(jacobians, residuals);
-  }
+    const Eigen::Isometry3d & point_to_map) const;
 
   const KDTree kdtree_;
   const int n_neighbors_;
