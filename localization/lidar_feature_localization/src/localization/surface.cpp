@@ -35,16 +35,17 @@
 #include "lidar_feature_library/eigen.hpp"
 #include "lidar_feature_library/pcl_utils.hpp"
 
+#include "lidar_feature_localization/eigen.hpp"
 #include "lidar_feature_localization/filter.hpp"
 #include "lidar_feature_localization/jacobian.hpp"
 #include "lidar_feature_localization/kdtree.hpp"
 #include "lidar_feature_localization/math.hpp"
 #include "lidar_feature_localization/matrix_type.hpp"
+#include "lidar_feature_localization/point_to_vector.hpp"
 #include "lidar_feature_localization/surface.hpp"
 
 const double plane_bias = 1.0;
 
-// TODO(IshitaTakeshi) Move the functions below to surface.cpp
 double SignedPointPlaneDistance(const Eigen::VectorXd & w, const Eigen::VectorXd & x)
 {
   assert(w.size() == x.size());

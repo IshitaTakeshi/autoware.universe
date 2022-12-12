@@ -54,6 +54,8 @@
 #include "lidar_feature_library/ros_msg.hpp"
 #include "lidar_feature_library/warning.hpp"
 
+#include "lidar_feature_localization/edge.hpp"
+#include "lidar_feature_localization/surface.hpp"
 
 using Odometry = nav_msgs::msg::Odometry;
 using PointCloud2 = sensor_msgs::msg::PointCloud2;
