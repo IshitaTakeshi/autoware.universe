@@ -51,12 +51,6 @@ void ThrowsIfPointCloudIsEmpty(const typename pcl::PointCloud<PointType>::Ptr & 
   }
 }
 
-template<typename PointType>
-Eigen::Vector3d GetXYZ(const PointType & point)
-{
-  return Eigen::Vector3d(point.x, point.y, point.z);
-}
-
 pcl::PointXYZ MakePointXYZ(const Eigen::Vector3d & v);
 
 Eigen::MatrixXd Get(
@@ -81,5 +75,11 @@ typename pcl::PointCloud<T>::Ptr TransformPointCloud(
   pcl::transformPointCloud(*cloud, *transformed, transform);
   return transformed;
 }
+
+inline Eigen::Vector3d GetXYZ(const pcl::PointXYZ & point)
+{
+  return Eigen::Vector3d(point.x, point.y, point.z);
+}
+
 
 #endif  // LIDAR_FEATURE_LIBRARY__PCL_UTILS_HPP_
