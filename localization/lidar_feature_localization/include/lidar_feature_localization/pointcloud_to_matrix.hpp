@@ -41,7 +41,7 @@ Eigen::MatrixXd PointCloudToMatrix(
 {
   Eigen::MatrixXd points(map->size(), PointToVector::NumDimension());
   for (size_t i = 0; i < map->size(); i++) {
-    points.row(i) = PointToVector::Convert(map->at(i));
+    points.row(i) = PointToVector::PointToVector(map->at(i));
   }
   return points;
 }

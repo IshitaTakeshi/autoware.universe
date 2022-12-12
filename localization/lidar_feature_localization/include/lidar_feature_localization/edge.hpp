@@ -118,7 +118,7 @@ public:
       }
 
       const Eigen::Vector3d principal = ed.eigenvectors().col(2);
-      const Eigen::Vector3d p0 = PointXYZToVector::Convert(scan->at(i));
+      const Eigen::Vector3d p0 = PointXYZVectorConversion::PointToVector(scan->at(i));
       const Eigen::Vector3d p1 = mean - principal;
       const Eigen::Vector3d p2 = mean + principal;
 

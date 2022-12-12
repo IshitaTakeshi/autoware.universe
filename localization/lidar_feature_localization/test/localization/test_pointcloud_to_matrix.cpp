@@ -34,21 +34,21 @@
 #include "lidar_feature_localization/pointcloud_to_matrix.hpp"
 
 
-TEST(PointCloudToMatrix, PointXYZCRToVector)
+TEST(PointCloudToMatrix, PointXYZToVector)
 {
-  const pcl::PointCloud<PointXYZCR>::Ptr map(new pcl::PointCloud<PointXYZCR>());
+  const pcl::PointCloud<pcl::PointXYZ>::Ptr map(new pcl::PointCloud<pcl::PointXYZ>());
 
-  map->push_back(PointXYZCR(0., 1., 0., 2., 0));
-  map->push_back(PointXYZCR(1., 0., 1., 4., 1));
-  map->push_back(PointXYZCR(2., 0., 3., 4., 2));
+  map->push_back(pcl::PointXYZ(0., 1., 0.));
+  map->push_back(pcl::PointXYZ(1., 0., 1.));
+  map->push_back(pcl::PointXYZ(2., 0., 3.));
 
-  const Eigen::MatrixXd matrix = PointCloudToMatrix<PointXYZCRToVector, PointXYZCR>(map);
+  const Eigen::MatrixXd matrix = PointCloudToMatrix<PointXYZVectorConversion, pcl::PointXYZ>(map);
 
-  Eigen::MatrixXd expected(3, 4);
+  Eigen::MatrixXd expected(3, 3);
   expected <<
-    0., 1., 0., 2.,
-    1., 0., 1., 4.,
-    2., 0., 3., 4.;
+    0., 1., 0.,
+    1., 0., 1.,
+    2., 0., 3.;
 
   EXPECT_EQ((matrix - expected).norm(), 0.);
 }

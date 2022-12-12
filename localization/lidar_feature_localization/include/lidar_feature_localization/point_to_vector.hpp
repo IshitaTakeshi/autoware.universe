@@ -35,49 +35,17 @@
 #include "lidar_feature_library/point_type.hpp"
 
 
-class PointXYZCRToVector
-{
-public:
-  using PointType = PointXYZCR;
-
-  static Eigen::VectorXd Convert(const PointXYZCR & p)
-  {
-    return Eigen::Vector4d(p.x, p.y, p.z, p.curvature);
-  }
-
-  static size_t NumDimension()
-  {
-    return 4;
-  }
-};
-
-class PointXYZCRToXYZVector
-{
-public:
-  using PointType = PointXYZCR;
-
-  static Eigen::VectorXd Convert(const PointXYZCR & p)
-  {
-    return Eigen::Vector3d(p.x, p.y, p.z);
-  }
-
-  static size_t NumDimension()
-  {
-    return 3;
-  }
-};
-
-class PointXYZToVector
+class PointXYZVectorConversion
 {
 public:
   using PointType = pcl::PointXYZ;
 
-  static pcl::PointXYZ ToPoint(const Eigen::Vector3d & v)
+  static pcl::PointXYZ VectorToPoint(const Eigen::Vector3d & v)
   {
     return pcl::PointXYZ(v(0), v(1), v(2));
   }
 
-  static Eigen::VectorXd Convert(const pcl::PointXYZ & p)
+  static Eigen::VectorXd PointToVector(const pcl::PointXYZ & p)
   {
     return Eigen::Vector3d(p.x, p.y, p.z);
   }

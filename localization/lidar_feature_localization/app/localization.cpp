@@ -210,7 +210,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr TargetEdgeCloud(
 
     for (int i = -20; i <= 20; i++) {
       const Eigen::Vector3d v = mean + 0.1 * static_cast<double>(i) * principal;
-      const pcl::PointXYZ p = PointXYZToVector::ToPoint(v);
+      const pcl::PointXYZ p = PointXYZVectorConversion::VectorToPoint(v);
       cloud->push_back(p);
     }
   }

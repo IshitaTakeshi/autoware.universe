@@ -136,8 +136,8 @@ std::tuple<std::vector<Eigen::MatrixXd>, std::vector<Eigen::VectorXd>> Surface::
       continue;
     }
 
-    const Eigen::Vector3d p = PointXYZToVector::Convert(scan->at(i));
-    const Eigen::Vector3d g = PointXYZToVector::Convert(query);
+    const Eigen::Vector3d p = PointXYZVectorConversion::PointToVector(scan->at(i));
+    const Eigen::Vector3d g = PointXYZVectorConversion::PointToVector(query);
 
     jacobians.push_back(MakeJacobianRow(w, q, p));
     residuals.push_back(SignedPointPlaneDistanceVector1d(w, g));
