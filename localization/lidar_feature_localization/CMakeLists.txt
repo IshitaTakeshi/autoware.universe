@@ -28,6 +28,7 @@ set(LOCALIZATION_SOURCE_FILES
   src/localization/alignment.cpp
   src/localization/degenerate.cpp
   src/localization/edge.cpp
+  src/localization/eigen.cpp
   src/localization/robust.cpp
   src/localization/jacobian.cpp
   src/localization/kdtree.cpp
