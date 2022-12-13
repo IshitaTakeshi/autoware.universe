@@ -41,21 +41,26 @@
 #include <string>
 #include <tuple>
 
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <nav_msgs/msg/odometry.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+
+#include "lidar_feature_localization/edge.hpp"
 #include "lidar_feature_localization/localizer.hpp"
 #include "lidar_feature_localization/matrix_type.hpp"
 #include "lidar_feature_localization/posevec.hpp"
-#include "lidar_feature_localization/subscriber.hpp"
+#include "lidar_feature_localization/stamp_sorted_objects.hpp"
+#include "lidar_feature_localization/surface.hpp"
 
 #include "lidar_feature_extraction/edge_surface_extraction.hpp"
 #include "lidar_feature_extraction/hyper_parameter.hpp"
 #include "lidar_feature_extraction/ring.hpp"
 
 #include "lidar_feature_library/point_type.hpp"
+#include "lidar_feature_library/qos.hpp"
 #include "lidar_feature_library/ros_msg.hpp"
 #include "lidar_feature_library/warning.hpp"
 
-#include "lidar_feature_localization/edge.hpp"
-#include "lidar_feature_localization/surface.hpp"
 
 using Odometry = nav_msgs::msg::Odometry;
 using PointCloud2 = sensor_msgs::msg::PointCloud2;
