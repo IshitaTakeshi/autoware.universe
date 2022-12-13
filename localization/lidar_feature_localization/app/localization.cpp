@@ -222,6 +222,15 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr TargetEdgeCloud(
   return cloud;
 }
 
+inline rclcpp::SubscriptionOptions MutuallyExclusiveOption(rclcpp::Node & node)
+{
+  const rclcpp::CallbackGroup::SharedPtr callback_group =
+    node.create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+  auto main_sub_opt = rclcpp::SubscriptionOptions();
+  main_sub_opt.callback_group = callback_group;
+  return main_sub_opt;
+}
+
 template<typename PointType>
 class LocalizationNode : public rclcpp::Node
 {
@@ -244,7 +253,8 @@ public:
     optimization_start_pose_subscriber_(
       this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
         "optimization_start_pose", QOS_BEST_EFFORT_VOLATILE,
-        std::bind(&LocalizationNode::OptimizationStartPoseCallback, this, std::placeholders::_1))),
+        std::bind(&LocalizationNode::OptimizationStartPoseCallback, this, std::placeholders::_1),
+        MutuallyExclusiveOption(*this))),
     edge_publisher_(this->create_publisher<PointCloud2>("edge_features", 10)),
     surface_publisher_(this->create_publisher<PointCloud2>("surface_features", 10)),
     target_edge_publisher_(this->create_publisher<PointCloud2>("target_edge_features", 10)),

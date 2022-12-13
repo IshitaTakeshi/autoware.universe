@@ -29,13 +29,4 @@
 #ifndef LIDAR_FEATURE_EXTRACTION__SUBSCRIPTION_HPP_
 #define LIDAR_FEATURE_EXTRACTION__SUBSCRIPTION_HPP_
 
-inline rclcpp::SubscriptionOptions MutuallyExclusiveOption(rclcpp::Node & node)
-{
-  const rclcpp::CallbackGroup::SharedPtr callback_group =
-    node.create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  auto main_sub_opt = rclcpp::SubscriptionOptions();
-  main_sub_opt.callback_group = callback_group;
-  return main_sub_opt;
-}
-
 #endif  // LIDAR_FEATURE_EXTRACTION__SUBSCRIPTION_HPP_
