@@ -4,6 +4,11 @@ project(lidar_feature_localization)
 set(CMAKE_CXX_STANDARD 17)
 add_compile_options(-pg -g -O3 -Wall -Wextra -Wpedantic -Werror)
 
+if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
+  add_compile_options(-msse -msse2 -msse3 -msse4 -msse4.1 -msse4.2)
+endif()
+
+set(CMAKE_BUILD_TYPE "Release")
 set(CMAKE_CXX_OUTPUT_EXTENSION_REPLACE ON)
 
 find_package(ament_cmake REQUIRED)
