@@ -94,6 +94,21 @@ TEST(Edge, PrincipalComponents)
   }
 }
 
+TEST(Edge, IsEdge)
+{
+  {
+    const double threshold = 10.0;
+    EXPECT_TRUE(IsEdge(Eigen::Vector3d(0., 1., 10.1), threshold));
+    EXPECT_FALSE(IsEdge(Eigen::Vector3d(0., 1., 10.0), threshold));
+  }
+
+  {
+    const double threshold = 5.0;
+    EXPECT_TRUE(IsEdge(Eigen::Vector3d(10.1, 2., 0.1), threshold));
+    EXPECT_FALSE(IsEdge(Eigen::Vector3d(1.0, 5.0, 0.9), threshold));
+  }
+}
+
 TEST(Edge, Center)
 {
   const Eigen::Matrix<double, 5, 3> A =

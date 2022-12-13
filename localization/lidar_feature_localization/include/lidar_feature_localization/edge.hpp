@@ -41,6 +41,7 @@
 #include <tuple>
 #include <vector>
 
+#include "lidar_feature_library/algorithm.hpp"
 #include "lidar_feature_library/eigen.hpp"
 #include "lidar_feature_library/pcl_utils.hpp"
 #include "lidar_feature_library/random.hpp"
@@ -78,9 +79,10 @@ Eigen::Vector3d MakeEdgeResidual(
 
 Eigen::MatrixXd GetXYZ(const pcl::PointCloud<pcl::PointXYZ> & map);
 
-inline bool IsEdge(const Eigen::Vector3d & eigenvalues, const double threshold = 5.0)
+inline bool IsEdge(const Eigen::Vector3d & eigenvalues, const double threshold = 10.0)
 {
-  return eigenvalues(2) < eigenvalues(1) * threshold;
+  const Eigen::Vector3d sorted = SortThreeValues(eigenvalues);
+  return sorted(2) > sorted(1) * threshold;
 }
 
 class Edge
