@@ -75,10 +75,6 @@ function(add_extraction_testcase filepath)
   string(REGEX REPLACE ".cpp" "" test_name_suffix ${filename})
   set(test_name "extraction_${test_name_suffix}")
 
-  message("test_name_suffix = ${test_name_suffix}")
-  message("test_name = ${test_name}")
-  message("filepath = ${filepath}")
-
   ament_add_gmock(${test_name} ${filepath})
   target_link_libraries("${test_name}" library extraction)
   ament_target_dependencies(${test_name} ${${PROJECT_NAME}_FOUND_BUILD_DEPENDS})
@@ -88,10 +84,6 @@ function(add_lib_testcase filepath)
   get_filename_component(filename ${filepath} NAME)
   string(REGEX REPLACE ".cpp" "" test_name_suffix ${filename})
   set(test_name "lib_${test_name_suffix}")
-
-  message("test_name_suffix = ${test_name_suffix}")
-  message("test_name = ${test_name}")
-  message("filepath = ${filepath}")
 
   ament_add_gmock(${test_name} ${filepath})
   target_link_libraries("${test_name}" library)
