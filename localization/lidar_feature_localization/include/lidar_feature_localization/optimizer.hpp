@@ -76,8 +76,8 @@ class Optimizer
 public:
   explicit Optimizer(
     const ProblemType & problem,
-    const int max_iter = 20,
-    const double huber_k = 1.345)
+    const int max_iter,
+    const double huber_k)
   : problem_(problem), max_iter_(max_iter), huber_k_(huber_k)
   {
   }

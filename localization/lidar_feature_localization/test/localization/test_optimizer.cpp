@@ -42,6 +42,7 @@
 
 #include "lidar_feature_library/eigen.hpp"
 
+constexpr double huber_k = 1.345;
 
 const Eigen::Isometry3d MakeTransform(const Eigen::Quaterniond & q, const Eigen::Vector3d & t)
 {
@@ -53,6 +54,7 @@ const Eigen::Isometry3d MakeTransform(const Eigen::Quaterniond & q, const Eigen:
 
 TEST(Alignment, SimpleDatasetConvergenceCheck)
 {
+  const int max_iter = 10;
   const Eigen::Quaterniond q_true = Eigen::Quaterniond(1, -1, 1, -1).normalized();
   const Eigen::Vector3d t_true(-1, 3, 2);
   const Eigen::Isometry3d transform_true = MakeTransform(q_true, t_true);
@@ -70,7 +72,6 @@ TEST(Alignment, SimpleDatasetConvergenceCheck)
   using ArgumentType = std::tuple<Eigen::MatrixXd, Eigen::MatrixXd>;
 
   {
-    const double huber_k = 1.345;
     const AlignmentProblem problem;
 
     const Eigen::Quaterniond initial_q = Eigen::Quaterniond(1.1, -1.1, 1.1, -1.1).normalized();
@@ -99,12 +100,10 @@ TEST(Alignment, SimpleDatasetConvergenceCheck)
     EXPECT_TRUE(updated_error < initial_error);
   }
 
-  const int max_iter = 10;
-
   {
     // start from the true pose
     const AlignmentProblem problem;
-    const Optimizer<AlignmentProblem, ArgumentType> optimizer(problem, max_iter);
+    const Optimizer<AlignmentProblem, ArgumentType> optimizer(problem, max_iter, huber_k);
 
     const OptimizationResult result = optimizer.Run(std::make_tuple(X, Y), transform_true);
     const Eigen::Isometry3d transform_pred = result.pose;
@@ -125,7 +124,7 @@ TEST(Alignment, SimpleDatasetConvergenceCheck)
   {
     // start from a different translation
     const AlignmentProblem problem;
-    const Optimizer<AlignmentProblem, ArgumentType> optimizer(problem, max_iter);
+    const Optimizer<AlignmentProblem, ArgumentType> optimizer(problem, max_iter, huber_k);
 
     const Eigen::Isometry3d initial = MakeIsometry3d(q_true, Eigen::Vector3d(2, 4, 1));
     const OptimizationResult result = optimizer.Run(std::make_tuple(X, Y), initial);
@@ -147,7 +146,7 @@ TEST(Alignment, SimpleDatasetConvergenceCheck)
   {
     // start from a different rotation
     const AlignmentProblem problem;
-    const Optimizer<AlignmentProblem, ArgumentType> optimizer(problem, max_iter);
+    const Optimizer<AlignmentProblem, ArgumentType> optimizer(problem, max_iter, huber_k);
 
     const Eigen::Quaterniond q = Eigen::Quaterniond(1.1, -1.1, 1.1, -1.1).normalized();
     const Eigen::Isometry3d initial = MakeIsometry3d(q, t_true);
@@ -170,7 +169,7 @@ TEST(Alignment, SimpleDatasetConvergenceCheck)
 
   {
     const AlignmentProblem problem;
-    const Optimizer<AlignmentProblem, ArgumentType> optimizer(problem, max_iter);
+    const Optimizer<AlignmentProblem, ArgumentType> optimizer(problem, max_iter, huber_k);
 
     const Eigen::Quaterniond q = Eigen::Quaterniond(1.1, -1.1, 1.1, -1.1).normalized();
     const Eigen::Isometry3d initial = MakeIsometry3d(q, Eigen::Vector3d(-4, -6, 3));
@@ -194,14 +193,14 @@ TEST(Alignment, SimpleDatasetConvergenceCheck)
 
 TEST(Alignment, ShouldReturnFalseForEmptyData)
 {
+  const int max_iter = 10;
   const Eigen::Matrix<double, 0, 3> X;
   const Eigen::Matrix<double, 0, 3> Y;
 
   using ArgumentType = std::tuple<Eigen::MatrixXd, Eigen::MatrixXd>;
-  const int max_iter = 10;
 
   const AlignmentProblem problem;
-  const Optimizer<AlignmentProblem, ArgumentType> optimizer(problem, max_iter);
+  const Optimizer<AlignmentProblem, ArgumentType> optimizer(problem, max_iter, huber_k);
 
   const OptimizationResult result = optimizer.Run(
     std::make_tuple(X, Y), Eigen::Isometry3d::Identity());
@@ -234,7 +233,7 @@ TEST(Alignment, ShouldReturnFalseWhenNoConvergence)
   const int max_iter = 1;
 
   const AlignmentProblem problem;
-  const Optimizer<AlignmentProblem, ArgumentType> optimizer(problem, max_iter);
+  const Optimizer<AlignmentProblem, ArgumentType> optimizer(problem, 1, huber_k);
 
   const OptimizationResult result = optimizer.Run(
     std::make_tuple(X, Y), Eigen::Isometry3d::Identity());

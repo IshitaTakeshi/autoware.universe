@@ -268,6 +268,11 @@ TEST(Surface, Convergence)
       return walls;
     };
 
+  using OptimizerType = Optimizer<Surface, pcl::PointCloud<pcl::PointXYZ>::Ptr>;
+
+  const int max_iter = 40;
+  const double huber_k = 1.345;
+
   const auto map = make_walls(40);
 
   const Eigen::Quaterniond q_ture = Eigen::Quaterniond(0.9, 0.1, 0.1, -0.1).normalized();
@@ -284,7 +289,7 @@ TEST(Surface, Convergence)
   const Eigen::Vector3d t_initial = Eigen::Vector3d::Zero();
   const Eigen::Isometry3d initial_pose = MakeIsometry3d(q_initial, t_initial);
 
-  const Optimizer<Surface, pcl::PointCloud<pcl::PointXYZ>::Ptr> optimizer(surface);
+  const OptimizerType optimizer(surface, max_iter, huber_k);
   const OptimizationResult result = optimizer.Run(scan, initial_pose);
   const Eigen::Isometry3d transform_pred = result.pose;
   const auto transformed = TransformPointCloud<pcl::PointXYZ>(transform_pred, scan);
