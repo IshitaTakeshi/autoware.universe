@@ -116,9 +116,6 @@ private:
   const HyperParameters params_;
   const EdgeLabel edge_label_;
   const SurfaceLabel surface_label_;
-  const rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr cloud_subscriber_;
-  const rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr edge_publisher_;
-  const rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr surface_publisher_;
 };
 
 #endif  // LIDAR_FEATURE_LOCALIZATION__EDGE_SURFACE_EXTRACTION_
