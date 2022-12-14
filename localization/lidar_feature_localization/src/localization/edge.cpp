@@ -112,7 +112,7 @@ std::tuple<std::vector<Eigen::MatrixXd>, std::vector<Eigen::VectorXd>> Edge::Mak
     const Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> ed = EigenDecomposition(covariance);
     const Eigen::Vector3d eigenvalues = ed.eigenvalues();
 
-    if (IsEdge(eigenvalues)) {
+    if (!IsEdge(eigenvalues)) {
       continue;
     }
 

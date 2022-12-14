@@ -207,7 +207,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr TargetEdgeCloud(
     const Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> ed = EigenDecomposition(covariance);
     const Eigen::Vector3d eigenvalues = ed.eigenvalues();
 
-    if (IsEdge(eigenvalues)) {
+    if (!IsEdge(eigenvalues)) {
       continue;
     }
 
