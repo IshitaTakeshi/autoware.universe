@@ -103,8 +103,8 @@ std::tuple<std::vector<Eigen::MatrixXd>, std::vector<Eigen::VectorXd>> Surface::
   const Eigen::Isometry3d & point_to_map) const
 {
   // TODO(IshitaTakeshi) Make the leaf size specifiable
-  // const auto downsampled = Downsample<pcl::PointXYZ>(scan, 1.0);
-  return this->MakeFromDownsampled(scan, point_to_map);
+  const auto downsampled = Downsample<pcl::PointXYZ>(scan, 1.0);
+  return this->MakeFromDownsampled(downsampled, point_to_map);
 }
 
 pcl::PointCloud<pcl::PointXYZ> Surface::NearestKSearch(const pcl::PointXYZ & query) const
