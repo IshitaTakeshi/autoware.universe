@@ -26,9 +26,6 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef LIDAR_FEATURE_LOCALIZATION__LOAM_OPTIMIZATION_PROBLEM_HPP_
-#define LIDAR_FEATURE_LOCALIZATION__LOAM_OPTIMIZATION_PROBLEM_HPP_
-
 #include <Eigen/Eigenvalues>
 
 #include <pcl/point_cloud.h>
@@ -40,26 +37,35 @@
 #include <tuple>
 #include <vector>
 
-#include "lidar_feature_localization/edge.hpp"
-#include "lidar_feature_localization/edge_surface_scan.hpp"
-#include "lidar_feature_localization/degenerate.hpp"
 #include "lidar_feature_localization/loam_optimization_problem.hpp"
-#include "lidar_feature_localization/math.hpp"
-#include "lidar_feature_localization/surface.hpp"
 
-
-class LOAMOptimizationProblem
+LOAMOptimizationProblem::LOAMOptimizationProblem(
+  const std::shared_ptr<Edge> & edge, const std::shared_ptr<Surface> & surface)
+: edge_(edge), surface_(surface)
 {
-public:
-  LOAMOptimizationProblem(
-    const std::shared_ptr<Edge> & edge, const std::shared_ptr<Surface> & surface);
+}
 
-  std::tuple<std::vector<Eigen::MatrixXd>, std::vector<Eigen::VectorXd>>
-  Make(const EdgeSurfaceScan & edge_surface_scan, const Eigen::Isometry3d & point_to_map) const;
+std::tuple<std::vector<Eigen::MatrixXd>, std::vector<Eigen::VectorXd>>
+LOAMOptimizationProblem::Make(
+  const EdgeSurfaceScan & edge_surface_scan, const Eigen::Isometry3d & point_to_map) const
+{
+  const pcl::PointCloud<pcl::PointXYZ>::Ptr & edge_scan = std::get<0>(edge_surface_scan);
+  const pcl::PointCloud<pcl::PointXYZ>::Ptr & surface_scan = std::get<1>(edge_surface_scan);
 
-private:
-  const std::shared_ptr<Edge> edge_;
-  const std::shared_ptr<Surface> surface_;
-};
+  const auto edge = edge_->Make(edge_scan, point_to_map);
+  const auto surface = surface_->Make(surface_scan, point_to_map);
 
-#endif  // LIDAR_FEATURE_LOCALIZATION__LOAM_OPTIMIZATION_PROBLEM_HPP_
+  const std::vector<Eigen::MatrixXd> edge_jacobian = std::get<0>(edge);
+  const std::vector<Eigen::MatrixXd> surface_jacobian = std::get<0>(surface);
+  const std::vector<Eigen::VectorXd> edge_residual = std::get<1>(edge);
+  const std::vector<Eigen::VectorXd> surface_residual = std::get<1>(surface);
+
+  // TODO(IshitaTakeshi) avoid memory copies
+  std::vector<Eigen::MatrixXd> jacobians;
+  std::vector<Eigen::VectorXd> residuals;
+  jacobians.insert(jacobians.end(), edge_jacobian.begin(), edge_jacobian.end());
+  jacobians.insert(jacobians.end(), surface_jacobian.begin(), surface_jacobian.end());
+  residuals.insert(residuals.end(), edge_residual.begin(), edge_residual.end());
+  residuals.insert(residuals.end(), surface_residual.begin(), surface_residual.end());
+  return std::make_tuple(jacobians, residuals);
+}
