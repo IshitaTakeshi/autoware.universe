@@ -37,7 +37,7 @@
 #include <tuple>
 #include <vector>
 
-#include "lidar_feature_localization/loam_optimization_problem.hpp"
+#include "lidar_feature_localization/problem.hpp"
 
 LOAMOptimizationProblem::LOAMOptimizationProblem(
   const std::shared_ptr<Edge> & edge, const std::shared_ptr<Surface> & surface)

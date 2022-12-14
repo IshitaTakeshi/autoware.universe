@@ -38,7 +38,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include "lidar_feature_localization/edge.hpp"
-#include "lidar_feature_localization/loam_optimization_problem.hpp"
+#include "lidar_feature_localization/problem.hpp"
 #include "lidar_feature_localization/optimizer.hpp"
 
 #include "lidar_feature_library/convert_point_cloud_type.hpp"
