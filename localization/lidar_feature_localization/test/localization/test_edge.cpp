@@ -213,16 +213,18 @@ TEST(Edge, Convergence)
   auto make_lines = [&](const int n) {
       pcl::PointCloud<pcl::PointXYZ>::Ptr lines(new pcl::PointCloud<pcl::PointXYZ>());
 
+      const double s = 0.01;
+      const double offset = 10.0;
       for (int x = 0; x < n; x++) {
-        lines->push_back(pcl::PointXYZ(x, normal(), normal()));
+        lines->push_back(pcl::PointXYZ(offset + s * x, normal(), normal()));
       }
 
       for (int y = 0; y < n; y++) {
-        lines->push_back(pcl::PointXYZ(normal(), y, normal()));
+        lines->push_back(pcl::PointXYZ(normal(), offset + s * y, normal()));
       }
 
       for (int z = 0; z < n; z++) {
-        lines->push_back(pcl::PointXYZ(normal(), normal(), z));
+        lines->push_back(pcl::PointXYZ(normal(), normal(), offset + s * z));
       }
 
       return lines;
@@ -232,7 +234,7 @@ TEST(Edge, Convergence)
 
   const int max_iter = 40;
   const double huber_k = 1.345;
-  const auto map = make_lines(40);
+  const auto map = make_lines(200);
 
   const Eigen::Quaterniond q_true = Eigen::Quaterniond(1.0, 0.1, 0.1, -0.1).normalized();
   const Eigen::Vector3d t_true(0.7, -0.3, 0.5);
