@@ -222,15 +222,6 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr TargetEdgeCloud(
   return cloud;
 }
 
-inline rclcpp::SubscriptionOptions MutuallyExclusiveOption(rclcpp::Node & node)
-{
-  const rclcpp::CallbackGroup::SharedPtr callback_group =
-    node.create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  auto main_sub_opt = rclcpp::SubscriptionOptions();
-  main_sub_opt.callback_group = callback_group;
-  return main_sub_opt;
-}
-
 template<typename PointType>
 class LocalizationNode : public rclcpp::Node
 {
@@ -247,14 +238,13 @@ public:
     warning_(this),
     extraction_(params_),
     cloud_subscriber_(
-      this->create_subscription<sensor_msgs::msg::PointCloud2>(
+      this->create_subscription<PointCloud2>(
         "points_raw", QOS_BEST_EFFORT_VOLATILE,
         std::bind(&LocalizationNode::Callback, this, std::placeholders::_1))),
     optimization_start_pose_subscriber_(
-      this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+      this->create_subscription<PoseStamped>(
         "optimization_start_pose", QOS_BEST_EFFORT_VOLATILE,
-        std::bind(&LocalizationNode::OptimizationStartPoseCallback, this, std::placeholders::_1),
-        MutuallyExclusiveOption(*this))),
+        std::bind(&LocalizationNode::OptimizationStartPoseCallback, this, std::placeholders::_1))),
     edge_publisher_(this->create_publisher<PointCloud2>("edge_features", 10)),
     surface_publisher_(this->create_publisher<PointCloud2>("surface_features", 10)),
     target_edge_publisher_(this->create_publisher<PointCloud2>("target_edge_features", 10)),
@@ -270,9 +260,9 @@ public:
 
 private:
   void OptimizationStartPoseCallback(
-    const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr stamped_pose)
+    const geometry_msgs::msg::PoseStamped::ConstSharedPtr stamped_pose)
   {
-    this->SetOptimizationStartPose(stamped_pose->header.stamp, stamped_pose->pose.pose);
+    this->SetOptimizationStartPose(stamped_pose->header.stamp, stamped_pose->pose);
   }
 
   void SetOptimizationStartPose(const rclcpp::Time & stamp, const geometry_msgs::msg::Pose & pose)
@@ -346,7 +336,7 @@ private:
   const Warning warning_;
   const EdgeSurfaceExtraction<PointType> extraction_;
   const rclcpp::Subscription<PointCloud2>::SharedPtr cloud_subscriber_;
-  const rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr optimization_start_pose_subscriber_;
+  const rclcpp::Subscription<PoseStamped>::SharedPtr optimization_start_pose_subscriber_;
   const rclcpp::Publisher<PointCloud2>::SharedPtr edge_publisher_;
   const rclcpp::Publisher<PointCloud2>::SharedPtr surface_publisher_;
   const rclcpp::Publisher<PointCloud2>::SharedPtr target_edge_publisher_;
