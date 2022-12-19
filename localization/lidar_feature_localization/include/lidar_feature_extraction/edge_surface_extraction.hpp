@@ -32,12 +32,12 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
+#include <tuple>
+#include <vector>
+
 #include <rclcpp/rclcpp.hpp>
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
-
-#include <tuple>
-#include <vector>
 
 #include "lidar_feature_extraction/curvature.hpp"
 #include "lidar_feature_extraction/hyper_parameter.hpp"

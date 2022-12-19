@@ -28,10 +28,10 @@
 
 #include <gmock/gmock.h>
 
-#include <vector>
-
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
+
+#include <vector>
 
 #include "lidar_feature_extraction/neighbor.hpp"
 #include "lidar_feature_extraction/label.hpp"
