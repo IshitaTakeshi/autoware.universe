@@ -66,6 +66,7 @@ using Odometry = nav_msgs::msg::Odometry;
 using PointCloud2 = sensor_msgs::msg::PointCloud2;
 using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
 using PoseStamped = geometry_msgs::msg::PoseStamped;
+using Pose = geometry_msgs::msg::Pose;
 
 double Nanoseconds(const rclcpp::Time & t)
 {
@@ -259,20 +260,19 @@ public:
   ~LocalizationNode() {}
 
 private:
-  void OptimizationStartPoseCallback(
-    const geometry_msgs::msg::PoseStamped::ConstSharedPtr stamped_pose)
+  void OptimizationStartPoseCallback(const PoseStamped::ConstSharedPtr stamped_pose)
   {
     this->SetOptimizationStartPose(stamped_pose->header.stamp, stamped_pose->pose);
   }
 
-  void SetOptimizationStartPose(const rclcpp::Time & stamp, const geometry_msgs::msg::Pose & pose)
+  void SetOptimizationStartPose(const rclcpp::Time & stamp, const Pose & pose)
   {
     const double msg_stamp_nanosec = Nanoseconds(stamp);
     warning_.Info(fmt::format("Received a prior pose of time {}", msg_stamp_nanosec));
     prior_poses_.Insert(msg_stamp_nanosec, GetIsometry3d(pose));
   }
 
-  void Callback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr cloud_msg)
+  void Callback(const PointCloud2::ConstSharedPtr cloud_msg)
   {
     warning_.Info("Received a cloud message");
     if (prior_poses_.Size() == 0) {
