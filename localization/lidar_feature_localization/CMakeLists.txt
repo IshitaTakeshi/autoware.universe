@@ -121,7 +121,6 @@ if(BUILD_TESTING)
     test/localization/test_jacobian.cpp
     test/localization/test_kdtree.cpp
     test/localization/test_math.cpp
-    test/localization/test_odometry.cpp
     test/localization/test_optimizer.cpp
     test/localization/test_pointcloud_to_matrix.cpp
     test/localization/test_posevec.cpp
