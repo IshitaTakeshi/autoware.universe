@@ -31,16 +31,17 @@ set(LIBRARY_SOURCE_FILES
 
 set(LOCALIZATION_SOURCE_FILES
   src/localization/alignment.cpp
+  src/localization/debug.cpp
   src/localization/degenerate.cpp
   src/localization/edge.cpp
   src/localization/eigen.cpp
-  src/localization/robust.cpp
   src/localization/jacobian.cpp
   src/localization/kdtree.cpp
   src/localization/optimizer.cpp
+  src/localization/posevec.cpp
   src/localization/problem.cpp
-  src/localization/surface.cpp
-  src/localization/posevec.cpp)
+  src/localization/robust.cpp
+  src/localization/surface.cpp)
 
 set(EXTRACTION_SOURCE_FILES
   src/extraction/convolution.cpp
