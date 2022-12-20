@@ -103,7 +103,7 @@ public:
     cloud_subscriber_(
       this->create_subscription<PointCloud2>(
         "points_raw", QOS_BEST_EFFORT_VOLATILE,
-        std::bind(&LocalizationNode::Callback, this, std::placeholders::_1))),
+        std::bind(&LocalizationNode::PointCloudCallback, this, std::placeholders::_1))),
     optimization_start_pose_subscriber_(
       this->create_subscription<PoseStamped>(
         "optimization_start_pose", QOS_BEST_EFFORT_VOLATILE,
@@ -134,7 +134,7 @@ private:
     prior_poses_.Insert(msg_stamp_nanosec, GetIsometry3d(pose));
   }
 
-  void Callback(const PointCloud2::ConstSharedPtr cloud_msg)
+  void PointCloudCallback(const PointCloud2::ConstSharedPtr cloud_msg)
   {
     warning_.Info("Received a cloud message");
     if (prior_poses_.Size() == 0) {
