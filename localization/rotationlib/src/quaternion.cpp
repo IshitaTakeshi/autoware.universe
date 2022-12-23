@@ -85,4 +85,11 @@ Eigen::Quaterniond RPYToQuaternionXYZ(const double roll, const double pitch, con
   return q;
 }
 
+Eigen::Quaterniond AngleAxisToQuaternion(const Eigen::Vector3d & rotvec)
+{
+  const double angle = rotvec.norm();
+  const Eigen::Vector3d axis = rotvec.normalized();
+  return Eigen::Quaterniond(Eigen::AngleAxisd(angle, axis));
+}
+
 }  // namespace rotationlib

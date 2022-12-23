@@ -37,6 +37,7 @@ using rotationlib::ToWXYZ;
 using rotationlib::LeftMultiplicationMatrix;
 using rotationlib::RightMultiplicationMatrix;
 using rotationlib::RPYToQuaternionXYZ;
+using rotationlib::AngleAxisToQuaternion;
 
 
 TEST(Quaternion, LeftMultiplicationMatrix)
@@ -57,7 +58,7 @@ TEST(Quaternion, RightMultiplicationMatrix)
   EXPECT_THAT((q3 - q4).norm(), testing::Le(1e-4));
 }
 
-TEST(Eigen, RPYToQuaternionXYZ)
+TEST(Quaternion, RPYToQuaternionXYZ)
 {
   const double roll = 0.1;
   const double pitch = 0.2;
@@ -73,6 +74,26 @@ TEST(Eigen, RPYToQuaternionXYZ)
   const double z = 0.1435721750273919;
 
   const Eigen::Quaterniond q = RPYToQuaternionXYZ(roll, pitch, yaw);
+
+  const double tolerance = 1e-8;
+  EXPECT_NEAR(q.w(), w, tolerance);
+  EXPECT_NEAR(q.x(), x, tolerance);
+  EXPECT_NEAR(q.y(), y, tolerance);
+  EXPECT_NEAR(q.z(), z, tolerance);
+}
+
+TEST(Quaternion, AngleAxisToQuaternion)
+{
+// >>> from scipy.spatial.transform import Rotation
+// >>> [x, y, z, w] = Rotation.from_rotvec([0.1, 0.2, 0.3]).as_quat()
+
+  const double w = 0.98255098;
+  const double x = 0.04970884;
+  const double y = 0.09941769;
+  const double z = 0.14912653;
+
+  const Eigen::Vector3d rotvec(0.1, 0.2, 0.3);
+  const Eigen::Quaterniond q = AngleAxisToQuaternion(rotvec);
 
   const double tolerance = 1e-8;
   EXPECT_NEAR(q.w(), w, tolerance);
