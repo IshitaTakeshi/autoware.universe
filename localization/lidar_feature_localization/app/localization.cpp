@@ -160,10 +160,17 @@ private:
 
   void PointCloudCallback(const PointCloud2::ConstSharedPtr cloud_msg)
   {
+    const std::string lidar_frame = "lidar_feature_base_link";
+
     warning_.Info("Received a cloud message");
     if (prior_poses_.Size() == 0) {
       warning_.Warn("Received a cloud message but there's no pose in the prior queue");
       return;
+    }
+
+    if (!RingIsAvailable(cloud_msg->fields)) {
+      warning_.Error("Ring channel could not be found");
+      rclcpp::shutdown();
     }
 
     const auto input_cloud = GetPointCloud<PointType>(*cloud_msg);
@@ -173,14 +180,8 @@ private:
       rclcpp::shutdown();
     }
 
-    if (!RingIsAvailable(cloud_msg->fields)) {
-      warning_.Error("Ring channel could not be found");
-      rclcpp::shutdown();
-    }
-
     const auto [edge, surface] = extraction_.Run(input_cloud);
 
-    const std::string lidar_frame = "lidar_feature_base_link";
     const rclcpp::Time stamp = cloud_msg->header.stamp;
     edge_publisher_->publish(ToRosMsg<pcl::PointXYZ>(edge, stamp, lidar_frame));
     surface_publisher_->publish(ToRosMsg<pcl::PointXYZ>(surface, stamp, lidar_frame));
@@ -203,12 +204,9 @@ private:
     const Matrix6d covariance = MakeCovariance();
 
     pose_with_covariance_publisher_->publish(
-      MakePoseWithCovarianceStamped(pose, covariance, stamp, "map")
-    );
+      MakePoseWithCovarianceStamped(pose, covariance, stamp, "map"));
 
-    tf_broadcaster_.sendTransform(
-      MakeTransformStamped(pose, stamp, "map", "lidar_feature_base_link")
-    );
+    tf_broadcaster_.sendTransform(MakeTransformStamped(pose, stamp, "map", lidar_frame));
 
     warning_.Info("Pose update done");
   }
