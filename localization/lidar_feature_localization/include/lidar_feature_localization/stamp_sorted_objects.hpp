@@ -29,6 +29,8 @@
 #ifndef LIDAR_FEATURE_LOCALIZATION__STAMP_SORTED_OBJECTS_HPP_
 #define LIDAR_FEATURE_LOCALIZATION__STAMP_SORTED_OBJECTS_HPP_
 
+#include <fmt/core.h>
+
 #include <map>
 #include <mutex>
 #include <tuple>
@@ -49,7 +51,7 @@ public:
     objects_[timestamp] = object;
   }
 
-  std::tuple<double, Object> GetClosest(const double timestamp)
+  std::tuple<double, Object> GetClosest(const double timestamp) const
   {
     std::lock_guard<std::mutex> guard(mutex_);
 
@@ -77,7 +79,53 @@ public:
            std::make_tuple(time1, object1);
   }
 
-  size_t Size()
+  std::tuple<double, Object> GetFirst() const
+  {
+    std::lock_guard<std::mutex> guard(mutex_);
+    return *objects_.begin();
+  }
+
+  std::tuple<double, Object> GetLast() const
+  {
+    std::lock_guard<std::mutex> guard(mutex_);
+    return *std::prev(objects_.end());
+  }
+
+  double GetFirstTimestamp() const
+  {
+    return std::get<0>(this->GetFirst());
+  }
+
+  double GetLastTimestamp() const
+  {
+    return std::get<0>(this->GetLast());
+  }
+
+  std::tuple<double, Object> GetPrev(const double timestamp) const
+  {
+    std::lock_guard<std::mutex> guard(mutex_);
+
+    const double first = std::get<0>(*objects_.begin());
+    if (timestamp <= first) {
+      throw std::invalid_argument(fmt::format("There's no element before {}", first));
+    }
+    // the first element in map that satisfies g >= timestamp
+    const auto g = objects_.lower_bound(timestamp);
+    return *std::prev(g);
+  }
+
+  std::tuple<double, Object> GetNext(const double timestamp) const
+  {
+    std::lock_guard<std::mutex> guard(mutex_);
+    const auto last = *std::prev(objects_.end());
+    const double last_time = std::get<0>(last);
+    if (last_time <= timestamp) {
+      throw std::invalid_argument(fmt::format("There's no element after {}", last_time));
+    }
+    return *objects_.upper_bound(timestamp);
+  }
+
+  size_t Size() const
   {
     std::lock_guard<std::mutex> guard(mutex_);
     return objects_.size();
@@ -105,7 +153,7 @@ public:
   }
 
 private:
-  std::mutex mutex_;
+  mutable std::mutex mutex_;
   std::map<double, Object> objects_;
 };
 

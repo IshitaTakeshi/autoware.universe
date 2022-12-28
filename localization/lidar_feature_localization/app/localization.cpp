@@ -59,17 +59,24 @@
 #include "lidar_feature_localization/matrix_type.hpp"
 #include "lidar_feature_localization/posevec.hpp"
 #include "lidar_feature_localization/stamp_sorted_objects.hpp"
-
+#include "lidar_feature_localization/twist_integration.hpp"
 
 using Odometry = nav_msgs::msg::Odometry;
 using PointCloud2 = sensor_msgs::msg::PointCloud2;
 using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
 using PoseStamped = geometry_msgs::msg::PoseStamped;
 using Pose = geometry_msgs::msg::Pose;
+using TwistStamped = geometry_msgs::msg::TwistStamped;
 
-double Nanoseconds(const rclcpp::Time & t)
+
+inline double Nanoseconds(const rclcpp::Time & t)
 {
   return static_cast<double>(t.nanoseconds());
+}
+
+inline double Seconds(const rclcpp::Time & t)
+{
+  return 1e-9 * Nanoseconds(t);
 }
 
 Matrix6d MakeCovariance()
@@ -108,6 +115,10 @@ public:
       this->create_subscription<PoseStamped>(
         "optimization_start_pose", QOS_BEST_EFFORT_VOLATILE,
         std::bind(&LocalizationNode::OptimizationStartPoseCallback, this, std::placeholders::_1))),
+    twist_subscriber_(
+      this->create_subscription<TwistStamped>(
+        "twist", QOS_BEST_EFFORT_VOLATILE,
+        std::bind(&LocalizationNode::TwistCallback, this, std::placeholders::_1))),
     edge_publisher_(this->create_publisher<PointCloud2>("edge_features", 10)),
     surface_publisher_(this->create_publisher<PointCloud2>("surface_features", 10)),
     target_edge_publisher_(this->create_publisher<PointCloud2>("target_edge_features", 10)),
@@ -122,6 +133,19 @@ public:
   ~LocalizationNode() {}
 
 private:
+  void TwistCallback(const TwistStamped::ConstSharedPtr twist)
+  {
+    const double time_second = Seconds(twist->header.stamp);
+    const Eigen::Vector3d w = ToVector3d(twist->twist.angular);
+    const Eigen::Vector3d v = ToVector3d(twist->twist.linear);
+
+    if (!twist_integration_.IsInitialized()) {
+      twist_integration_.Init(time_second, w, v);
+      return;
+    }
+    twist_integration_.Update(time_second, w, v);
+  }
+
   void OptimizationStartPoseCallback(const PoseStamped::ConstSharedPtr stamped_pose)
   {
     this->SetOptimizationStartPose(stamped_pose->header.stamp, stamped_pose->pose);
@@ -192,6 +216,7 @@ private:
   const HyperParameters params_;
   const std::shared_ptr<Edge> edge_;
   const std::shared_ptr<Surface> surface_;
+  TwistIntegration twist_integration_;
   Localizer localizer_;
   tf2_ros::TransformBroadcaster tf_broadcaster_;
   StampSortedObjects<Eigen::Isometry3d> prior_poses_;
@@ -199,6 +224,7 @@ private:
   const EdgeSurfaceExtraction<PointType> extraction_;
   const rclcpp::Subscription<PointCloud2>::SharedPtr cloud_subscriber_;
   const rclcpp::Subscription<PoseStamped>::SharedPtr optimization_start_pose_subscriber_;
+  const rclcpp::Subscription<TwistStamped>::SharedPtr twist_subscriber_;
   const rclcpp::Publisher<PointCloud2>::SharedPtr edge_publisher_;
   const rclcpp::Publisher<PointCloud2>::SharedPtr surface_publisher_;
   const rclcpp::Publisher<PointCloud2>::SharedPtr target_edge_publisher_;

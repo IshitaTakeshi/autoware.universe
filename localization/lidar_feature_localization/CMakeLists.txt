@@ -41,7 +41,8 @@ set(LOCALIZATION_SOURCE_FILES
   src/localization/posevec.cpp
   src/localization/problem.cpp
   src/localization/robust.cpp
-  src/localization/surface.cpp)
+  src/localization/surface.cpp
+  src/localization/twist_integration.cpp)
 
 set(EXTRACTION_SOURCE_FILES
   src/extraction/convolution.cpp
@@ -127,7 +128,8 @@ if(BUILD_TESTING)
     test/localization/test_recent_scans.cpp
     test/localization/test_robust.cpp
     test/localization/test_stamp_sorted_objects.cpp
-    test/localization/test_surface.cpp)
+    test/localization/test_surface.cpp
+    test/localization/test_twist_integration.cpp)
 
   foreach(filepath ${LOCALIZATION_TEST_FILES})
     add_localization_testcase(${filepath})
