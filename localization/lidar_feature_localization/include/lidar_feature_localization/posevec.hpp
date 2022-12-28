@@ -34,8 +34,6 @@
 
 #include "lidar_feature_localization/matrix_type.hpp"
 
-Eigen::Quaterniond AngleAxisToQuaternion(const Eigen::Vector3d & theta);
-
 Eigen::Isometry3d MakePose(
   const Eigen::Quaterniond & q,
   const Eigen::Vector3d & t);

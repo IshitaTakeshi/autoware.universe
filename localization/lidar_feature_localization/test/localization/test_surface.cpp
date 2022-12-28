@@ -40,6 +40,9 @@
 #include "lidar_feature_localization/optimizer.hpp"
 #include "lidar_feature_localization/surface.hpp"
 
+#include "rotationlib/quaternion.hpp"
+
+
 TEST(Surface, EstimatePlaneCoefficients)
 {
   {
@@ -105,7 +108,7 @@ TEST(Surface, ResidualApproximation)
     const Eigen::Vector3d & theta,
     const Eigen::Vector3d & t,
     const Eigen::Vector3d & p) {
-      const Eigen::Quaterniond q = AngleAxisToQuaternion(theta);
+      const Eigen::Quaterniond q = rotationlib::AngleAxisToQuaternion(theta);
 
       Eigen::Isometry3d transform;
       transform.linear() = q.toRotationMatrix();
@@ -120,7 +123,7 @@ TEST(Surface, ResidualApproximation)
 
   const Eigen::Vector3d p(2., 4., 0.);
 
-  const Eigen::Quaterniond q0 = AngleAxisToQuaternion(theta0);
+  const Eigen::Quaterniond q0 = rotationlib::AngleAxisToQuaternion(theta0);
   const Eigen::Matrix<double, 1, 7> drdqt = MakeJacobianRow(w, q0, p);
   const Eigen::Matrix<double, 7, 6> M = MakeM(q0);
   const Eigen::Matrix<double, 1, 6> J = drdqt * M;
@@ -213,14 +216,14 @@ TEST(Surface, ErrorApproximation)
 
   const Eigen::Vector3d t0 = Eigen::Vector3d::Zero();
   const Eigen::Vector3d theta0 = Eigen::Vector3d::Zero();
-  const Eigen::Quaterniond q0 = AngleAxisToQuaternion(theta0);
+  const Eigen::Quaterniond q0 = rotationlib::AngleAxisToQuaternion(theta0);
 
   const Eigen::MatrixXd J = DrDqt(weights, points, q0) * MakeM(q0);
 
   const Eigen::Vector3d dtheta(0.1, -0.1, -0.1);
   const Eigen::Vector3d dt(0.1, 0.2, 0.4);
 
-  const Eigen::Quaterniond q1 = AngleAxisToQuaternion(theta0 + dtheta);
+  const Eigen::Quaterniond q1 = rotationlib::AngleAxisToQuaternion(theta0 + dtheta);
   const Eigen::Vector3d t1 = t0 + dt;
 
   const Eigen::VectorXd r0 = Residuals(weights, points, q0, t0);

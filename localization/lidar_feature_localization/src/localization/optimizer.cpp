@@ -32,6 +32,8 @@
 #include "lidar_feature_localization/degenerate.hpp"
 #include "lidar_feature_localization/optimizer.hpp"
 
+#include "rotationlib/quaternion.hpp"
+
 
 bool CheckConvergence(const Eigen::Quaterniond & dq, const Eigen::Vector3d & dt)
 {
@@ -93,7 +95,7 @@ std::tuple<Eigen::Quaterniond, Eigen::Vector3d> CalcUpdate(
 {
   const Eigen::Matrix<double, 7, 6> M = MakeM(q);
   const Vector6d dx = WeightedUpdate(M, weights, jacobians, residuals);
-  const Eigen::Quaterniond dq = AngleAxisToQuaternion(dx.head(3));
+  const Eigen::Quaterniond dq = rotationlib::AngleAxisToQuaternion(dx.head(3));
   const Eigen::Vector3d dt = dx.tail(3);
   return std::make_tuple(dq, dt);
 }

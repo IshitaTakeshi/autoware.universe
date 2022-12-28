@@ -35,6 +35,9 @@
 
 #include "lidar_feature_library/point_type.hpp"
 
+#include "rotationlib/quaternion.hpp"
+
+
 using testing::ElementsAre;
 using testing::DoubleEq;
 
@@ -155,7 +158,7 @@ TEST(Edge, ApproximateError)
     const Eigen::Vector3d & p2,
     const Eigen::Vector3d & theta,
     const Eigen::Vector3d & t) {
-      const Eigen::Quaterniond q = AngleAxisToQuaternion(theta);
+      const Eigen::Quaterniond q = rotationlib::AngleAxisToQuaternion(theta);
 
       Eigen::Isometry3d transform;
       transform.linear() = q.toRotationMatrix();
@@ -183,7 +186,7 @@ TEST(Edge, ApproximateError)
 
   const Eigen::Vector3d p0(2, 1, 0);
 
-  const Eigen::Quaterniond q0 = AngleAxisToQuaternion(theta0);
+  const Eigen::Quaterniond q0 = rotationlib::AngleAxisToQuaternion(theta0);
 
   const Eigen::Vector3d center = Center(X);
   const Eigen::Vector3d principal(1, 0, 0);
