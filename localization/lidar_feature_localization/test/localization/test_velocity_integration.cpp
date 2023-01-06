@@ -35,49 +35,49 @@
 
 TEST(VelocityIntegration, VelocityIntegration)
 {
-  VelocityIntegration ti;
+  VelocityIntegration integration;
 
   const Eigen::Vector3d v0(2.0, 0.0, 0.0);
   const Eigen::Vector3d v1(0.0, 0.5, 0.0);
   const Eigen::Vector3d v2(0.0, 0.0, 1.0);
 
-  ti.Init(1.0, v0);
-  ti.Update(2.0, v1);
-  ti.Update(3.0, v2);
+  integration.Init(1.0, v0);
+  integration.Update(2.0, v1);
+  integration.Update(3.0, v2);
 
   {
     const Eigen::Vector3d expected = v0 * (-1.0);
-    const Eigen::Vector3d p = ti.Get(0.0);
+    const Eigen::Vector3d p = integration.Get(0.0);
     EXPECT_EQ((p - expected).norm(), 0.);
   }
 
   {
     const Eigen::Vector3d expected = Eigen::Vector3d::Zero();
-    const Eigen::Vector3d p = ti.Get(1.0);
+    const Eigen::Vector3d p = integration.Get(1.0);
     EXPECT_EQ((p - expected).norm(), 0.);
   }
 
   {
     const Eigen::Vector3d expected = v0 * 0.5;
-    const Eigen::Vector3d p = ti.Get(1.5);
+    const Eigen::Vector3d p = integration.Get(1.5);
     EXPECT_EQ((p - expected).norm(), 0.);
   }
 
   {
     const Eigen::Vector3d expected = v0 * 1.0 + v1 * 0.5;
-    const Eigen::Vector3d p = ti.Get(2.5);
+    const Eigen::Vector3d p = integration.Get(2.5);
     EXPECT_EQ((p - expected).norm(), 0.);
   }
 
   {
     const Eigen::Vector3d expected = v0 * 1.0 + v1 * 1.0;
-    const Eigen::Vector3d p = ti.Get(3.0);
+    const Eigen::Vector3d p = integration.Get(3.0);
     EXPECT_EQ((p - expected).norm(), 0.);
   }
 
   {
     const Eigen::Vector3d expected = v0 * 1.0 + v1 * 1.0 + v2 * 0.5;
-    const Eigen::Vector3d p = ti.Get(3.5);
+    const Eigen::Vector3d p = integration.Get(3.5);
     EXPECT_EQ((p - expected).norm(), 0.);
   }
 }

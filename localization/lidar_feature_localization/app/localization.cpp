@@ -114,6 +114,10 @@ public:
       this->create_subscription<PoseStamped>(
         "optimization_start_pose", QOS_BEST_EFFORT_VOLATILE,
         std::bind(&LocalizationNode::OptimizationStartPoseCallback, this, std::placeholders::_1))),
+    twist_subscriber_(
+      this->create_subscription<TwistStamped>(
+        "twist", QOS_BEST_EFFORT_VOLATILE,
+        std::bind(&LocalizationNode::TwistCallback, this, std::placeholders::_1))),
     edge_publisher_(this->create_publisher<PointCloud2>("edge_features", 10)),
     surface_publisher_(this->create_publisher<PointCloud2>("surface_features", 10)),
     target_edge_publisher_(this->create_publisher<PointCloud2>("target_edge_features", 10)),
@@ -128,6 +132,13 @@ public:
   ~LocalizationNode() {}
 
 private:
+  void TwistCallback(const TwistStamped::ConstSharedPtr twist)
+  {
+    // const double time_second = Seconds(twist->header.stamp);
+    // const Eigen::Vector3d w = ToVector3d(twist->twist.angular);
+    // const Eigen::Vector3d v = ToVector3d(twist->twist.linear);
+  }
+
   void OptimizationStartPoseCallback(const PoseStamped::ConstSharedPtr stamped_pose)
   {
     this->SetOptimizationStartPose(stamped_pose->header.stamp, stamped_pose->pose);

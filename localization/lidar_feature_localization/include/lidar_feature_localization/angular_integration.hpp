@@ -34,38 +34,25 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-#include "lidar_feature_localization/stamp_sorted_objects.hpp"
+#include "lidar_feature_localization/integration.hpp"
+
+#include "rotationlib/quaternion.hpp"
 
 
-class AngularIntegration
+class AngularIntegration : public Integration<Eigen::Quaterniond, Eigen::Vector3d>
 {
 public:
-  AngularIntegration()
-  : omega_(Eigen::Vector3d())
+  Eigen::Quaterniond Predict(
+    const Eigen::Quaterniond & q0,
+    const Eigen::Vector3d & omega0,
+    const double dt) const
   {
+    return q0 * rotationlib::AngleAxisToQuaternion(omega0 * dt);
   }
 
-  bool IsInitialized() const;
-
-  void Update(
-    const double t_sec_curr,
-    const Eigen::Vector3d & v);
-
-  void Init(
-    const double t_sec_curr,
-    const Eigen::Vector3d & v);
-
-  Eigen::Quaterniond Get(const double t_sec_curr) const;
-
-private:
-  Eigen::Quaterniond GetEarlierThanFirst(const double t_sec_curr) const;
-  Eigen::Quaterniond GetLaterThanLast(const double t_sec_curr) const;
-  Eigen::Quaterniond GetInterpolated(const double t_sec_curr) const;
-
-  StampSortedObjects<Eigen::Quaterniond> qs_;
-  double t_sec_;
-  Eigen::Vector3d omega0_;
-  Eigen::Vector3d omega_;
+  Eigen::Quaterniond InitialValue() const {
+    return Eigen::Quaterniond::Identity();
+  }
 };
 
 #endif  // LIDAR_FEATURE_LOCALIZATION__ANGULAR_INTEGRATION_HPP_

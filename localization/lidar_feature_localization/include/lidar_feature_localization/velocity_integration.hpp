@@ -34,38 +34,23 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-#include "lidar_feature_localization/stamp_sorted_objects.hpp"
+#include "lidar_feature_localization/integration.hpp"
 
-class VelocityIntegration
+
+class VelocityIntegration : public Integration<Eigen::Vector3d, Eigen::Vector3d>
 {
 public:
-  VelocityIntegration()
-  : v_(Eigen::Vector3d::Zero())
+  Eigen::Vector3d Predict(
+    const Eigen::Vector3d & p0,
+    const Eigen::Vector3d & v0,
+    const double dt) const
   {
-    assert(ps_.Size() == 0);
+    return p0 + v0 * dt;
   }
 
-  bool IsInitialized() const;
-
-  void Update(
-    const double t_sec_curr,
-    const Eigen::Vector3d & v);
-
-  void Init(
-    const double t_sec_curr,
-    const Eigen::Vector3d & v);
-
-  Eigen::Vector3d Get(const double t_sec_curr) const;
-
-private:
-  Eigen::Vector3d GetEarlierThanFirst(const double t_sec_curr) const;
-  Eigen::Vector3d GetLaterThanLast(const double t_sec_curr) const;
-  Eigen::Vector3d GetInterpolated(const double t_sec_curr) const;
-
-  StampSortedObjects<Eigen::Vector3d> ps_;
-  double t_sec_;
-  Eigen::Vector3d v0_;
-  Eigen::Vector3d v_;
+  Eigen::Vector3d InitialValue() const {
+    return Eigen::Vector3d::Zero();
+  }
 };
 
 #endif  // LIDAR_FEATURE_LOCALIZATION__TWIST_INTEGRATION_HPP_
