@@ -31,6 +31,7 @@ set(LIBRARY_SOURCE_FILES
 
 set(LOCALIZATION_SOURCE_FILES
   src/localization/alignment.cpp
+  src/localization/angular_integration.cpp
   src/localization/debug.cpp
   src/localization/degenerate.cpp
   src/localization/edge.cpp
@@ -42,7 +43,7 @@ set(LOCALIZATION_SOURCE_FILES
   src/localization/problem.cpp
   src/localization/robust.cpp
   src/localization/surface.cpp
-  )
+  src/localization/velocity_integration.cpp)
 
 set(EXTRACTION_SOURCE_FILES
   src/extraction/convolution.cpp
@@ -116,6 +117,7 @@ if(BUILD_TESTING)
 
   set(LOCALIZATION_TEST_FILES
     test/localization/test_alignment.cpp
+    test/localization/test_angular_integration.cpp
     test/localization/test_degenerate.cpp
     test/localization/test_edge.cpp
     test/localization/test_filter.cpp
@@ -128,7 +130,7 @@ if(BUILD_TESTING)
     test/localization/test_robust.cpp
     test/localization/test_stamp_sorted_objects.cpp
     test/localization/test_surface.cpp
-    )
+    test/localization/test_velocity_integration.cpp)
 
   foreach(filepath ${LOCALIZATION_TEST_FILES})
     add_localization_testcase(${filepath})
