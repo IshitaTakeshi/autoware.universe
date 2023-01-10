@@ -70,7 +70,9 @@ public:
 
   IntegratedValueT Get(const double t_sec_curr) const
   {
-    // TODO throw runtime_error if not sufficient values found in qs_
+    if (qs_.Size() == 0) {
+      throw std::runtime_error("No element has been added yet");
+    }
 
     if (t_sec_curr <= qs_.GetFirstTimestamp()) {
       return this->GetEarlierThanFirst(t_sec_curr);

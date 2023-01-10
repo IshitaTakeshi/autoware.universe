@@ -84,3 +84,23 @@ TEST(AngularIntegration, AngularIntegration)
     EXPECT_LT(((q0 * q1 * q2).inverse() * q).vec().norm(), 1e-8);
   }
 }
+
+TEST(AngularIntegration, GetThrowsExceptionIfEmpty)
+{
+  AngularIntegration integration;
+
+  EXPECT_THROW(
+    try {
+    integration.Get(10.0);
+  } catch (std::runtime_error & e) {
+    EXPECT_STREQ(e.what(), "No element has been added yet");
+    throw e;
+  }
+    ,
+    std::runtime_error
+  );
+
+  integration.Add(10.0, Eigen::Vector3d(0.00, 0.15, 0.00));
+  integration.Get(5.0);
+  integration.Get(15.0);
+}
