@@ -68,6 +68,9 @@ using Pose = geometry_msgs::msg::Pose;
 using TwistStamped = geometry_msgs::msg::TwistStamped;
 
 
+const char map_frame[] = "map";
+const char lidar_frame[] = "lidar_feature_base_link";
+
 inline double Nanoseconds(const rclcpp::Time & t)
 {
   return static_cast<double>(t.nanoseconds());
@@ -91,6 +94,45 @@ Matrix6d MakeCovariance()
   return covariance;
 }
 
+class DebugCloudPublisher
+{
+public:
+  DebugCloudPublisher(
+    rclcpp::Node * node,
+    const std::shared_ptr<Edge> & edge,
+    const std::shared_ptr<Surface> & surface)
+  : edge_(edge), surface_(surface),
+    edge_publisher_(node->create_publisher<PointCloud2>("edge_features", 10)),
+    surface_publisher_(node->create_publisher<PointCloud2>("surface_features", 10)),
+    target_edge_publisher_(node->create_publisher<PointCloud2>("target_edge_features", 10)),
+    target_surface_publisher_(node->create_publisher<PointCloud2>("target_surface_features", 10))
+  {
+  }
+
+  void Publish(
+    const rclcpp::Time stamp,
+    const Eigen::Isometry3d pose,
+    const pcl::PointCloud<pcl::PointXYZ>::Ptr & edge,
+    const pcl::PointCloud<pcl::PointXYZ>::Ptr & surface) const
+  {
+    edge_publisher_->publish(ToRosMsg<pcl::PointXYZ>(edge, stamp, lidar_frame));
+    surface_publisher_->publish(ToRosMsg<pcl::PointXYZ>(surface, stamp, lidar_frame));
+
+    const auto target_edges = TargetEdgeCloud(edge_, pose, edge);
+    const auto target_surfaces = TargetSurfaceCloud(surface_, pose, surface);
+    target_edge_publisher_->publish(ToRosMsg<pcl::PointXYZ>(target_edges, stamp, map_frame));
+    target_surface_publisher_->publish(ToRosMsg<pcl::PointXYZ>(target_surfaces, stamp, map_frame));
+  }
+
+private:
+  const std::shared_ptr<Edge> edge_;
+  const std::shared_ptr<Surface> surface_;
+  const rclcpp::Publisher<PointCloud2>::SharedPtr edge_publisher_;
+  const rclcpp::Publisher<PointCloud2>::SharedPtr surface_publisher_;
+  const rclcpp::Publisher<PointCloud2>::SharedPtr target_edge_publisher_;
+  const rclcpp::Publisher<PointCloud2>::SharedPtr target_surface_publisher_;
+};
+
 template<typename PointType>
 class LocalizationNode : public rclcpp::Node
 {
@@ -102,6 +144,7 @@ public:
     params_(this),
     edge_(std::make_shared<Edge>(edge_map, params_.n_edge_neighbors)),
     surface_(std::make_shared<Surface>(surface_map, params_.n_surface_neighbors)),
+    debug_cloud_publisher_(this, edge_, surface_),
     localizer_(edge_, surface_, params_.max_iter, params_.huber_k),
     tf_broadcaster_(*this),
     warning_(this),
@@ -118,10 +161,6 @@ public:
       this->create_subscription<TwistStamped>(
         "twist", QOS_BEST_EFFORT_VOLATILE,
         std::bind(&LocalizationNode::TwistCallback, this, std::placeholders::_1))),
-    edge_publisher_(this->create_publisher<PointCloud2>("edge_features", 10)),
-    surface_publisher_(this->create_publisher<PointCloud2>("surface_features", 10)),
-    target_edge_publisher_(this->create_publisher<PointCloud2>("target_edge_features", 10)),
-    target_surface_publisher_(this->create_publisher<PointCloud2>("target_surface_features", 10)),
     pose_publisher_(this->create_publisher<PoseStamped>("estimated_pose", 10)),
     pose_with_covariance_publisher_(
       this->create_publisher<PoseWithCovarianceStamped>("estimated_pose_with_covariance", 10))
@@ -153,8 +192,6 @@ private:
 
   void PointCloudCallback(const PointCloud2::ConstSharedPtr cloud_msg)
   {
-    const std::string lidar_frame = "lidar_feature_base_link";
-
     warning_.Info("Received a cloud message");
     if (prior_poses_.Size() == 0) {
       warning_.Warn("Received a cloud message but there's no pose in the prior queue");
@@ -176,8 +213,6 @@ private:
     const auto [edge, surface] = extraction_.Run(input_cloud);
 
     const rclcpp::Time stamp = cloud_msg->header.stamp;
-    edge_publisher_->publish(ToRosMsg<pcl::PointXYZ>(edge, stamp, lidar_frame));
-    surface_publisher_->publish(ToRosMsg<pcl::PointXYZ>(surface, stamp, lidar_frame));
 
     const double msg_stamp_nanosec = Nanoseconds(stamp);
     const auto [prior_stamp_nanosec, prior] = prior_poses_.GetClosest(msg_stamp_nanosec);
@@ -187,19 +222,16 @@ private:
     localizer_.Update(std::make_tuple(edge, surface));
     const Eigen::Isometry3d pose = localizer_.Get();
 
-    const auto target_edges = TargetEdgeCloud(edge_, pose, edge);
-    const auto target_surfaces = TargetSurfaceCloud(surface_, pose, surface);
-    target_edge_publisher_->publish(ToRosMsg<pcl::PointXYZ>(target_edges, stamp, "map"));
-    target_surface_publisher_->publish(ToRosMsg<pcl::PointXYZ>(target_surfaces, stamp, "map"));
+    debug_cloud_publisher_.Publish(stamp, pose, edge, surface);
 
-    pose_publisher_->publish(MakePoseStamped(pose, stamp, "map"));
+    pose_publisher_->publish(MakePoseStamped(pose, stamp, map_frame));
 
     const Matrix6d covariance = MakeCovariance();
 
     pose_with_covariance_publisher_->publish(
-      MakePoseWithCovarianceStamped(pose, covariance, stamp, "map"));
+      MakePoseWithCovarianceStamped(pose, covariance, stamp, map_frame));
 
-    tf_broadcaster_.sendTransform(MakeTransformStamped(pose, stamp, "map", lidar_frame));
+    tf_broadcaster_.sendTransform(MakeTransformStamped(pose, stamp, map_frame, lidar_frame));
 
     warning_.Info("Pose update done");
   }
@@ -207,6 +239,7 @@ private:
   const HyperParameters params_;
   const std::shared_ptr<Edge> edge_;
   const std::shared_ptr<Surface> surface_;
+  const DebugCloudPublisher debug_cloud_publisher_;
   Localizer localizer_;
   tf2_ros::TransformBroadcaster tf_broadcaster_;
   StampSortedObjects<Eigen::Isometry3d> prior_poses_;
@@ -215,10 +248,6 @@ private:
   const rclcpp::Subscription<PointCloud2>::SharedPtr cloud_subscriber_;
   const rclcpp::Subscription<PoseStamped>::SharedPtr optimization_start_pose_subscriber_;
   const rclcpp::Subscription<TwistStamped>::SharedPtr twist_subscriber_;
-  const rclcpp::Publisher<PointCloud2>::SharedPtr edge_publisher_;
-  const rclcpp::Publisher<PointCloud2>::SharedPtr surface_publisher_;
-  const rclcpp::Publisher<PointCloud2>::SharedPtr target_edge_publisher_;
-  const rclcpp::Publisher<PointCloud2>::SharedPtr target_surface_publisher_;
   const rclcpp::Publisher<PoseStamped>::SharedPtr pose_publisher_;
   const rclcpp::Publisher<PoseWithCovarianceStamped>::SharedPtr pose_with_covariance_publisher_;
 };
