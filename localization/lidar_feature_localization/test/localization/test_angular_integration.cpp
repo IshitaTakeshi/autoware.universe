@@ -41,9 +41,9 @@ TEST(AngularIntegration, AngularIntegration)
   const Eigen::Vector3d omega1(1.0, 0.0, 0.0);
   const Eigen::Vector3d omega2(0.0, 0.0, 2.0);
 
-  integration.Init(1.0, omega0);
-  integration.Update(2.0, omega1);
-  integration.Update(3.0, omega2);
+  integration.Add(1.0, omega0);
+  integration.Add(2.0, omega1);
+  integration.Add(3.0, omega2);
 
   {
     const Eigen::Quaterniond expected = rotationlib::AngleAxisToQuaternion(omega0 * (-0.5));

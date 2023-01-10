@@ -31,7 +31,6 @@ set(LIBRARY_SOURCE_FILES
 
 set(LOCALIZATION_SOURCE_FILES
   src/localization/alignment.cpp
-  src/localization/angular_integration.cpp
   src/localization/debug.cpp
   src/localization/degenerate.cpp
   src/localization/edge.cpp
@@ -42,8 +41,7 @@ set(LOCALIZATION_SOURCE_FILES
   src/localization/posevec.cpp
   src/localization/problem.cpp
   src/localization/robust.cpp
-  src/localization/surface.cpp
-  src/localization/velocity_integration.cpp)
+  src/localization/surface.cpp)
 
 set(EXTRACTION_SOURCE_FILES
   src/extraction/convolution.cpp

@@ -41,9 +41,9 @@ TEST(VelocityIntegration, VelocityIntegration)
   const Eigen::Vector3d v1(0.0, 0.5, 0.0);
   const Eigen::Vector3d v2(0.0, 0.0, 1.0);
 
-  integration.Init(1.0, v0);
-  integration.Update(2.0, v1);
-  integration.Update(3.0, v2);
+  integration.Add(1.0, v0);
+  integration.Add(2.0, v1);
+  integration.Add(3.0, v2);
 
   {
     const Eigen::Vector3d expected = v0 * (-1.0);

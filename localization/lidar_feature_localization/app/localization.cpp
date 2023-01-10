@@ -132,7 +132,7 @@ public:
   ~LocalizationNode() {}
 
 private:
-  void TwistCallback(const TwistStamped::ConstSharedPtr twist)
+  void TwistCallback(const TwistStamped::ConstSharedPtr)
   {
     // const double time_second = Seconds(twist->header.stamp);
     // const Eigen::Vector3d w = ToVector3d(twist->twist.angular);

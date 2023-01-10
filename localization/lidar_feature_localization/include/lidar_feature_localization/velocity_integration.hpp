@@ -48,7 +48,8 @@ public:
     return p0 + v0 * dt;
   }
 
-  Eigen::Vector3d InitialValue() const {
+  Eigen::Vector3d InitialValue() const
+  {
     return Eigen::Vector3d::Zero();
   }
 };

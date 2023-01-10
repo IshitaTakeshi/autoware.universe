@@ -32,12 +32,14 @@
 #include "lidar_feature_localization/interpolation.hpp"
 #include "lidar_feature_localization/stamp_sorted_objects.hpp"
 
-inline double CalcDt(double t1, const double t0) {
+inline double CalcDt(double t1, const double t0)
+{
   return t1 - t0;
 }
 
 template<typename IntegratedValueT, typename InputValueT>
-class Integration {
+class Integration
+{
 public:
   Integration()
   {
@@ -50,50 +52,20 @@ public:
 
   virtual IntegratedValueT InitialValue() const = 0;
 
-  void ThrowIfNotInitialized() {
+  void Add(
+    const double t_sec_curr,
+    const InputValueT & omega)
+  {
     if (!this->IsInitialized()) {
-      throw std::runtime_error("Not initialized yet");
+      this->Init(t_sec_curr, omega);
+      return;
     }
-  }
-
-  void ThrowIfAlreadyInitialized() {
-    if (this->IsInitialized()) {
-      throw std::runtime_error("Already initialized");
-    }
+    this->Update(t_sec_curr, omega);
   }
 
   bool IsInitialized() const
   {
     return qs_.Size() > 0;
-  }
-
-  void Update(
-    const double t_sec_curr,
-    const InputValueT & omega)
-  {
-    this->ThrowIfNotInitialized();
-
-    const double dt = CalcDt(t_sec_curr, t_sec_);
-    const IntegratedValueT q0 = std::get<1>(qs_.GetLast());
-    const IntegratedValueT q1 = this->Predict(q0, omega_, dt);
-
-    qs_.Insert(t_sec_curr, q1);
-
-    t_sec_ = t_sec_curr;
-    omega_ = omega;
-  }
-
-  void Init(
-    const double t_sec_curr,
-    const InputValueT & omega)
-  {
-    this->ThrowIfAlreadyInitialized();
-
-    qs_.Insert(t_sec_curr, this->InitialValue());
-
-    omega0_ = omega;
-    omega_ = omega;
-    t_sec_ = t_sec_curr;
   }
 
   IntegratedValueT Get(const double t_sec_curr) const
@@ -112,6 +84,31 @@ public:
   }
 
 private:
+  void Update(
+    const double t_sec_curr,
+    const InputValueT & omega)
+  {
+    const double dt = CalcDt(t_sec_curr, t_sec_);
+    const IntegratedValueT q0 = std::get<1>(qs_.GetLast());
+    const IntegratedValueT q1 = this->Predict(q0, omega_, dt);
+
+    qs_.Insert(t_sec_curr, q1);
+
+    t_sec_ = t_sec_curr;
+    omega_ = omega;
+  }
+
+  void Init(
+    const double t_sec_curr,
+    const InputValueT & omega)
+  {
+    qs_.Insert(t_sec_curr, this->InitialValue());
+
+    omega0_ = omega;
+    omega_ = omega;
+    t_sec_ = t_sec_curr;
+  }
+
   IntegratedValueT GetEarlierThanFirst(const double t_sec_curr) const
   {
     const double t = qs_.GetFirstTimestamp();
