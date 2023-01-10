@@ -71,7 +71,7 @@ public:
   IntegratedValueT Get(const double t_sec_curr) const
   {
     if (qs_.Size() == 0) {
-      throw std::runtime_error("No element has been added yet");
+      return this->InitialValue();
     }
 
     if (t_sec_curr <= qs_.GetFirstTimestamp()) {

@@ -85,22 +85,11 @@ TEST(AngularIntegration, AngularIntegration)
   }
 }
 
-TEST(AngularIntegration, GetThrowsExceptionIfEmpty)
+TEST(AngularIntegration, GetReturnsInitialValueIfEmpty)
 {
   AngularIntegration integration;
 
-  EXPECT_THROW(
-    try {
-    integration.Get(10.0);
-  } catch (std::runtime_error & e) {
-    EXPECT_STREQ(e.what(), "No element has been added yet");
-    throw e;
-  }
-    ,
-    std::runtime_error
-  );
-
-  integration.Add(10.0, Eigen::Vector3d(0.00, 0.15, 0.00));
-  integration.Get(5.0);
-  integration.Get(15.0);
+  const Eigen::Quaterniond q = integration.Get(10.0);
+  const Eigen::Quaterniond r = integration.InitialValue();
+  EXPECT_EQ((q.inverse() * r).vec().norm(), 0.0);
 }

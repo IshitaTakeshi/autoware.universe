@@ -81,3 +81,12 @@ TEST(VelocityIntegration, VelocityIntegration)
     EXPECT_EQ((p - expected).norm(), 0.);
   }
 }
+
+TEST(VelocityIntegration, GetReturnsInitialValueIfEmpty)
+{
+  VelocityIntegration integration;
+
+  const Eigen::Vector3d v = integration.Get(10.0);
+  const Eigen::Vector3d u = integration.InitialValue();
+  EXPECT_EQ((v - u).norm(), 0.0);
+}
