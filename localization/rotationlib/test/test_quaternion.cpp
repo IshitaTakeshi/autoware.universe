@@ -101,3 +101,9 @@ TEST(Quaternion, AngleAxisToQuaternion)
   EXPECT_NEAR(q.y(), y, tolerance);
   EXPECT_NEAR(q.z(), z, tolerance);
 }
+
+TEST(AngleAxisToQuaternion, ZeroInputForIdentity) {
+  const Eigen::Quaterniond q = AngleAxisToQuaternion(Eigen::Vector3d(0, 0, 0));
+  EXPECT_EQ(q.norm(), 1.0);
+  EXPECT_EQ(q.w(), 1.0);
+}
