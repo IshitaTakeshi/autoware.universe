@@ -37,6 +37,7 @@ set(LOCALIZATION_SOURCE_FILES
   src/localization/eigen.cpp
   src/localization/jacobian.cpp
   src/localization/kdtree.cpp
+  src/localization/odometry_integration.cpp
   src/localization/optimizer.cpp
   src/localization/posevec.cpp
   src/localization/problem.cpp
@@ -122,6 +123,7 @@ if(BUILD_TESTING)
     test/localization/test_jacobian.cpp
     test/localization/test_kdtree.cpp
     test/localization/test_math.cpp
+    test/localization/test_odometry_integration.cpp
     test/localization/test_optimizer.cpp
     test/localization/test_pointcloud_to_matrix.cpp
     test/localization/test_recent_scans.cpp
