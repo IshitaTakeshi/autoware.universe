@@ -128,6 +128,7 @@ if(BUILD_TESTING)
     test/localization/test_pointcloud_to_matrix.cpp
     test/localization/test_recent_scans.cpp
     test/localization/test_robust.cpp
+    test/localization/test_sliding_window.cpp
     test/localization/test_stamp_sorted_objects.cpp
     test/localization/test_surface.cpp
     test/localization/test_velocity_integration.cpp)
