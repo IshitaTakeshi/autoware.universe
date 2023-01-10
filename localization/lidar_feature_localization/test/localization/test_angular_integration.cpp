@@ -37,48 +37,50 @@ TEST(AngularIntegration, AngularIntegration)
 {
   AngularIntegration integration;
 
-  const Eigen::Vector3d omega0(0.0, 3.0, 0.0);
-  const Eigen::Vector3d omega1(1.0, 0.0, 0.0);
-  const Eigen::Vector3d omega2(0.0, 0.0, 2.0);
+  const Eigen::Vector3d omega0(0.00, 0.15, 0.00);
+  const Eigen::Vector3d omega1(0.20, 0.00, 0.00);
+  const Eigen::Vector3d omega2(0.00, 0.00, 0.10);
 
-  integration.Add(1.0, omega0);
-  integration.Add(2.0, omega1);
-  integration.Add(3.0, omega2);
+  integration.Add(10.0, omega0);
+  integration.Add(20.0, omega1);
+  integration.Add(30.0, omega2);
 
   {
-    const Eigen::Quaterniond expected = rotationlib::AngleAxisToQuaternion(omega0 * (-0.5));
-    const Eigen::Quaterniond q = integration.Get(0.5);
+    const Eigen::Quaterniond expected = rotationlib::AngleAxisToQuaternion(omega0 * (-5.0));
+    const Eigen::Quaterniond q = integration.Get(5.0);
     EXPECT_LT((expected.inverse() * q).vec().norm(), 1e-8);
   }
 
   {
-    const Eigen::Quaterniond expected = rotationlib::AngleAxisToQuaternion(omega0 * 0.5);
-    const Eigen::Quaterniond q = integration.Get(1.5);
-    EXPECT_LT((expected.inverse() * q).vec().norm(), 1e-8);
-  }
+    const Eigen::Quaterniond q0 = Eigen::Quaterniond::Identity();
+    const Eigen::Quaterniond q1 = rotationlib::AngleAxisToQuaternion(omega0 * 5.0);
 
-  {
-    const Eigen::Quaterniond q0 = rotationlib::AngleAxisToQuaternion(omega0 * 1.0);
-    const Eigen::Quaterniond q1 = rotationlib::AngleAxisToQuaternion(omega1 * 0.5);
-
-    const Eigen::Quaterniond q = integration.Get(2.5);
+    const Eigen::Quaterniond q = integration.Get(15.0);
     EXPECT_LT(((q0 * q1).inverse() * q).vec().norm(), 1e-8);
   }
 
   {
-    const Eigen::Quaterniond q0 = rotationlib::AngleAxisToQuaternion(omega0 * 1.0);
-    const Eigen::Quaterniond q1 = rotationlib::AngleAxisToQuaternion(omega1 * 1.0);
+    const Eigen::Quaterniond q0 = rotationlib::AngleAxisToQuaternion(omega0 * 10.0);
+    const Eigen::Quaterniond q1 = rotationlib::AngleAxisToQuaternion(omega1 * 5.0);
 
-    const Eigen::Quaterniond q = integration.Get(3.0);
+    const Eigen::Quaterniond q = integration.Get(25.0);
     EXPECT_LT(((q0 * q1).inverse() * q).vec().norm(), 1e-8);
   }
 
   {
-    const Eigen::Quaterniond q0 = rotationlib::AngleAxisToQuaternion(omega0 * 1.0);
-    const Eigen::Quaterniond q1 = rotationlib::AngleAxisToQuaternion(omega1 * 1.0);
-    const Eigen::Quaterniond q2 = rotationlib::AngleAxisToQuaternion(omega2 * 0.5);
+    const Eigen::Quaterniond q0 = rotationlib::AngleAxisToQuaternion(omega0 * 10.0);
+    const Eigen::Quaterniond q1 = rotationlib::AngleAxisToQuaternion(omega1 * 10.0);
 
-    const Eigen::Quaterniond q = integration.Get(3.5);
+    const Eigen::Quaterniond q = integration.Get(30.0);
+    EXPECT_LT(((q0 * q1).inverse() * q).vec().norm(), 1e-8);
+  }
+
+  {
+    const Eigen::Quaterniond q0 = rotationlib::AngleAxisToQuaternion(omega0 * 10.0);
+    const Eigen::Quaterniond q1 = rotationlib::AngleAxisToQuaternion(omega1 * 10.0);
+    const Eigen::Quaterniond q2 = rotationlib::AngleAxisToQuaternion(omega2 * 5.0);
+
+    const Eigen::Quaterniond q = integration.Get(35.0);
     EXPECT_LT(((q0 * q1 * q2).inverse() * q).vec().norm(), 1e-8);
   }
 }

@@ -50,7 +50,8 @@ public:
     return q0 * rotationlib::AngleAxisToQuaternion(omega0 * dt);
   }
 
-  Eigen::Quaterniond InitialValue() const {
+  Eigen::Quaterniond InitialValue() const
+  {
     return Eigen::Quaterniond::Identity();
   }
 };
