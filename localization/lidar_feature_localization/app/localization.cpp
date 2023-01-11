@@ -57,8 +57,10 @@
 #include "lidar_feature_localization/debug.hpp"
 #include "lidar_feature_localization/localizer.hpp"
 #include "lidar_feature_localization/matrix_type.hpp"
+#include "lidar_feature_localization/odometry_integration.hpp"
 #include "lidar_feature_localization/posevec.hpp"
 #include "lidar_feature_localization/stamp_sorted_objects.hpp"
+#include "lidar_feature_localization/sliding_window.hpp"
 
 using Odometry = nav_msgs::msg::Odometry;
 using PointCloud2 = sensor_msgs::msg::PointCloud2;
@@ -134,6 +136,26 @@ private:
 };
 
 template<typename PointType>
+typename pcl::PointCloud<PointType>::Ptr MergePointClouds(
+  const SlidingWindow<typename pcl::PointCloud<PointType>::Ptr> & sliding_window,
+  const OdometryIntegration & twist_integration)
+{
+  const size_t size = sliding_window.Size();
+  const auto [latest_timestamp, _] = sliding_window.Get(size - 1);
+  const auto latest_pose = twist_integration.Get(latest_timestamp);
+  const Eigen::Isometry3d inv_latest_pose = latest_pose.inverse();
+
+  typename pcl::PointCloud<PointType>::Ptr merged(new pcl::PointCloud<PointType>());
+  for (size_t i = 0; i < sliding_window.Size(); i++) {
+    const auto [timestamp, cloud] = sliding_window.Get(i);
+    const Eigen::Isometry3d pose = twist_integration.Get(timestamp);
+    const auto transformed = TransformPointCloud<PointType>(inv_latest_pose * pose, cloud);
+    *merged += *transformed;
+  }
+  return merged;
+}
+
+template<typename PointType>
 class LocalizationNode : public rclcpp::Node
 {
 public:
@@ -145,6 +167,7 @@ public:
     edge_(std::make_shared<Edge>(edge_map, params_.n_edge_neighbors)),
     surface_(std::make_shared<Surface>(surface_map, params_.n_surface_neighbors)),
     debug_cloud_publisher_(this, edge_, surface_),
+    sliding_window_(4),
     localizer_(edge_, surface_, params_.max_iter, params_.huber_k),
     tf_broadcaster_(*this),
     warning_(this),
@@ -171,11 +194,12 @@ public:
   ~LocalizationNode() {}
 
 private:
-  void TwistCallback(const TwistStamped::ConstSharedPtr)
+  void TwistCallback(const TwistStamped::ConstSharedPtr twist)
   {
-    // const double time_second = Seconds(twist->header.stamp);
-    // const Eigen::Vector3d w = ToVector3d(twist->twist.angular);
-    // const Eigen::Vector3d v = ToVector3d(twist->twist.linear);
+    const double time_second = Seconds(twist->header.stamp);
+    const Eigen::Vector3d v = ToVector3d(twist->twist.linear);
+    const Eigen::Vector3d w = ToVector3d(twist->twist.angular);
+    twist_integration_.Add(time_second, v, w);
   }
 
   void OptimizationStartPoseCallback(const PoseStamped::ConstSharedPtr stamped_pose)
@@ -210,9 +234,11 @@ private:
       rclcpp::shutdown();
     }
 
-    const auto [edge, surface] = extraction_.Run(input_cloud);
-
     const rclcpp::Time stamp = cloud_msg->header.stamp;
+    sliding_window_.Slide(Seconds(stamp), input_cloud);
+    const auto merged = MergePointClouds<PointType>(sliding_window_, twist_integration_);
+
+    const auto [edge, surface] = extraction_.Run(merged);
 
     const double msg_stamp_nanosec = Nanoseconds(stamp);
     const auto [prior_stamp_nanosec, prior] = prior_poses_.GetClosest(msg_stamp_nanosec);
@@ -240,6 +266,8 @@ private:
   const std::shared_ptr<Edge> edge_;
   const std::shared_ptr<Surface> surface_;
   const DebugCloudPublisher debug_cloud_publisher_;
+  OdometryIntegration twist_integration_;
+  SlidingWindow<typename pcl::PointCloud<PointType>::Ptr> sliding_window_;
   Localizer localizer_;
   tf2_ros::TransformBroadcaster tf_broadcaster_;
   StampSortedObjects<Eigen::Isometry3d> prior_poses_;
