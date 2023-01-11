@@ -49,6 +49,7 @@
 #include "lidar_feature_extraction/hyper_parameter.hpp"
 #include "lidar_feature_extraction/ring.hpp"
 
+#include "lidar_feature_library/pcl_utils.hpp"
 #include "lidar_feature_library/point_type.hpp"
 #include "lidar_feature_library/qos.hpp"
 #include "lidar_feature_library/ros_msg.hpp"
@@ -136,7 +137,7 @@ private:
 };
 
 template<typename PointType>
-typename pcl::PointCloud<PointType>::Ptr MergePointClouds(
+typename pcl::PointCloud<PointType>::Ptr ScanIntegration(
   const SlidingWindow<typename pcl::PointCloud<PointType>::Ptr> & sliding_window,
   const OdometryIntegration & twist_integration)
 {
@@ -145,14 +146,15 @@ typename pcl::PointCloud<PointType>::Ptr MergePointClouds(
   const auto latest_pose = twist_integration.Get(latest_timestamp);
   const Eigen::Isometry3d inv_latest_pose = latest_pose.inverse();
 
-  typename pcl::PointCloud<PointType>::Ptr merged(new pcl::PointCloud<PointType>());
-  for (size_t i = 0; i < sliding_window.Size(); i++) {
+  std::vector<Eigen::Isometry3d> poses;
+  std::vector<typename pcl::PointCloud<PointType>::Ptr> clouds;
+  for (size_t i = 0; i < size; i++) {
     const auto [timestamp, cloud] = sliding_window.Get(i);
     const Eigen::Isometry3d pose = twist_integration.Get(timestamp);
-    const auto transformed = TransformPointCloud<PointType>(inv_latest_pose * pose, cloud);
-    *merged += *transformed;
+    poses.push_back(inv_latest_pose * pose);
+    clouds.push_back(cloud);
   }
-  return merged;
+  return MergePointClouds<PointType>(poses, clouds);
 }
 
 template<typename PointType>
@@ -236,7 +238,7 @@ private:
 
     const rclcpp::Time stamp = cloud_msg->header.stamp;
     sliding_window_.Slide(Seconds(stamp), input_cloud);
-    const auto merged = MergePointClouds<PointType>(sliding_window_, twist_integration_);
+    const auto merged = ScanIntegration<PointType>(sliding_window_, twist_integration_);
 
     const auto [edge, surface] = extraction_.Run(merged);
 

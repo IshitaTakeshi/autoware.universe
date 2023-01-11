@@ -76,10 +76,23 @@ typename pcl::PointCloud<T>::Ptr TransformPointCloud(
   return transformed;
 }
 
+template<typename PointType>
+typename pcl::PointCloud<PointType>::Ptr MergePointClouds(
+  const std::vector<Eigen::Isometry3d> & poses,
+  const std::vector<typename pcl::PointCloud<PointType>::Ptr> & clouds)
+{
+  assert(poses.size() == clouds.size());
+  typename pcl::PointCloud<PointType>::Ptr merged(new pcl::PointCloud<PointType>());
+  for (size_t i = 0; i < poses.size(); i++) {
+    const auto transformed = TransformPointCloud<PointType>(poses[i], clouds[i]);
+    *merged += *transformed;
+  }
+  return merged;
+}
+
 inline Eigen::Vector3d GetXYZ(const pcl::PointXYZ & point)
 {
   return Eigen::Vector3d(point.x, point.y, point.z);
 }
-
 
 #endif  // LIDAR_FEATURE_LIBRARY__PCL_UTILS_HPP_

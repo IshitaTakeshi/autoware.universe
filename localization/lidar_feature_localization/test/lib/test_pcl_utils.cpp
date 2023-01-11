@@ -72,3 +72,49 @@ TEST(PCL_UTILS, TransformPointCloud)
     (q * to_vector(cloud->at(1)) + t - to_vector(transformed->at(1))).norm(),
     testing::Le(1e-4));
 }
+
+TEST(PCL_UTILS, MergePointClouds)
+{
+  auto almost_equal = [](const pcl::PointXYZI & a, const pcl::PointXYZI & b) {
+      return
+        std::abs(a.x - b.x) +
+        std::abs(a.y - b.y) +
+        std::abs(a.z - b.z) +
+        std::abs(a.intensity - b.intensity) < 1e-6;
+    };
+
+  Eigen::Isometry3d pose0;
+  pose0.linear() = (Eigen::Matrix3d() <<
+    0., 1., 0.,
+    1., 0., 0.,
+    0., 0., -1.
+  ).finished();
+  pose0.translation() = Eigen::Vector3d::Zero();
+
+  Eigen::Isometry3d pose1;
+  pose1.linear() = Eigen::Matrix3d::Identity();
+  pose1.translation() = Eigen::Vector3d(1., -1., 0.);
+
+  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud0(new pcl::PointCloud<pcl::PointXYZI>());
+  cloud0->push_back(pcl::PointXYZI(1., 2., 0., 0.5));
+  cloud0->push_back(pcl::PointXYZI(2., 4., 3., 0.3));
+
+  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud1(new pcl::PointCloud<pcl::PointXYZI>());
+  cloud1->push_back(pcl::PointXYZI(1., 2., 1., 0.1));
+  cloud1->push_back(pcl::PointXYZI(2., 4., 3., 0.9));
+
+  std::vector<Eigen::Isometry3d> poses{pose0, pose1};
+  std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> clouds{cloud0, cloud1};
+  const auto merged = MergePointClouds<pcl::PointXYZI>(poses, clouds);
+
+  pcl::PointCloud<pcl::PointXYZI>::Ptr expected(new pcl::PointCloud<pcl::PointXYZI>());
+  expected->push_back(pcl::PointXYZI(2., 1., 0., 0.5));
+  expected->push_back(pcl::PointXYZI(4., 2., -3., 0.3));
+  expected->push_back(pcl::PointXYZI(2., 1., 1., 0.1));
+  expected->push_back(pcl::PointXYZI(3., 3., 3., 0.9));
+
+  EXPECT_EQ(merged->size(), expected->size());
+  for (size_t i = 0; i < expected->size(); i++) {
+    EXPECT_TRUE(almost_equal(merged->at(i), expected->at(i)));
+  }
+}
