@@ -26,6 +26,7 @@ LocalizationTriggerModule::LocalizationTriggerModule(rclcpp::Node * node)
 {
   client_ekf_trigger_ = node->create_client<SetBool>("ekf_trigger_node");
   client_ndt_trigger_ = node->create_client<SetBool>("ndt_trigger_node");
+  client_loam_trigger_ = node->create_client<SetBool>("loam_trigger_node");
 }
 
 void LocalizationTriggerModule::deactivate() const
@@ -39,11 +40,15 @@ void LocalizationTriggerModule::deactivate() const
   if (!client_ndt_trigger_->service_is_ready()) {
     throw component_interface_utils::ServiceUnready("NDT triggering service is not ready");
   }
+  if (!client_loam_trigger_->service_is_ready()) {
+    throw component_interface_utils::ServiceUnready("LOAM triggering service is not ready");
+  }
 
   auto future_ekf = client_ekf_trigger_->async_send_request(req);
   auto future_ndt = client_ndt_trigger_->async_send_request(req);
+  auto future_loam = client_loam_trigger_->async_send_request(req);
 
-  if (future_ekf.get()->success & future_ndt.get()->success) {
+  if (future_ekf.get()->success & future_ndt.get()->success & future_loam.get()->success) {
     RCLCPP_INFO(logger_, "Deactivation succeeded");
   } else {
     RCLCPP_INFO(logger_, "Deactivation failed");
@@ -62,11 +67,15 @@ void LocalizationTriggerModule::activate() const
   if (!client_ndt_trigger_->service_is_ready()) {
     throw component_interface_utils::ServiceUnready("NDT triggering service is not ready");
   }
+  if (!client_loam_trigger_->service_is_ready()) {
+    throw component_interface_utils::ServiceUnready("LOAM triggering service is not ready");
+  }
 
   auto future_ekf = client_ekf_trigger_->async_send_request(req);
   auto future_ndt = client_ndt_trigger_->async_send_request(req);
+  auto future_loam = client_loam_trigger_->async_send_request(req);
 
-  if (future_ekf.get()->success & future_ndt.get()->success) {
+  if (future_ekf.get()->success & future_ndt.get()->success & future_loam.get()->success) {
     RCLCPP_INFO(logger_, "Activation succeeded");
   } else {
     RCLCPP_INFO(logger_, "Activation failed");

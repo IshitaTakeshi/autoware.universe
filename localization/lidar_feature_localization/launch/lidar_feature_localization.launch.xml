@@ -1,0 +1,20 @@
+<launch>
+  <arg name="rectified_scan_points_topic" default="/points_raw" description="Input rectified point cloud" />
+  <arg name="edge_features_topic" default="/edge_features" description="Extracted edge features" />
+  <arg name="surface_features_topic" default="/surface_features" description="Extracted surface features" />
+  <arg name="optimization_start_pose_topic" default="/optimization_start_pose" />
+  <arg name="estimated_pose_topic" default="/estimated_pose" />
+  <arg name="estimated_pose_with_covariance_topic" default="/estimated_pose_with_covariance" />
+  <arg name="node_name" default="lidar_feature_localization" />
+  <arg name="input_service_trigger_node" default="trigger_node" description="Trigger node service name" />
+
+  <node pkg="lidar_feature_localization" exec="lidar_feature_localization" name="$(var node_name)" output="log">
+    <remap from="points_raw" to="$(var rectified_scan_points_topic)"/>
+    <remap from="edge_features" to="$(var edge_features_topic)"/>
+    <remap from="surface_features" to="$(var surface_features_topic)"/>
+    <remap from="optimization_start_pose" to="$(var optimization_start_pose_topic)" />
+    <remap from="estimated_pose" to="$(var estimated_pose_topic)" />
+    <remap from="estimated_pose_with_covariance" to="$(var estimated_pose_with_covariance_topic)" />
+    <remap from="trigger_node_srv" to="$(var input_service_trigger_node)" />
+  </node>
+</launch>

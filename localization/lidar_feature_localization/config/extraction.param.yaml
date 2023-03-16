@@ -1,0 +1,32 @@
+/**:
+  ros__parameters:
+    # convolution padding in edge/surface extraction from lidar scan
+    convolution_padding: 2
+    # distance difference threshold in occlusion detection
+    # larger values for more strict occlusion detection
+    distance_diff_threshold: 0.3
+    # distance ratio threshold to detect parallel beams
+    # larger values for more strict parallel beam detection
+    parallel_beam_min_range_ratio: 0.02
+    # thresold for edge extraction
+    # larger values for fewer edges and less noise
+    edge_threshold: 10.0
+    # thresold for surface extraction
+    # larger values for more surface but with more noise
+    surface_threshold: 0.1
+    # minimum point range in the scan
+    min_range: 0.1
+    # maximum point range in the scan
+    max_range: 1000.0
+    # number of scan divisions
+    # larger values for more uniform feature extraction
+    n_blocks: 16
+    # max iteration in optimization
+    max_iter: 40
+    # number of edge neighbors retrieved from the map
+    n_edge_neighbors: 40
+    # number of surface neighbors retrieved from the map
+    n_surface_neighbors: 80
+    # the parameter 'k' in the huber weight function
+    # smaller values for better robustness to outliers
+    huber_k: 1.345
