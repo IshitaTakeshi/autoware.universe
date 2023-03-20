@@ -1,4 +1,4 @@
-// Copyright 2022 Tixiao Shan, Takeshi Ishita
+// Copyright 2023 The Autoware Contributors, Takeshi Ishita
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
@@ -10,7 +10,7 @@
 //      notice, this list of conditions and the following disclaimer in the
 //      documentation and/or other materials provided with the distribution.
 //
-//    * Neither the name of the Tixiao Shan, Takeshi Ishita nor the names of its
+//    * Neither the name of the Autoware Contributors, Takeshi Ishita nor the names of its
 //      contributors may be used to endorse or promote products derived from
 //      this software without specific prior written permission.
 //
@@ -27,22 +27,23 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 
-#include <unordered_map>
-#include <vector>
+#include <gtest/gtest.h>
 
-#include "lidar_feature_extraction/ring.hpp"
+#include "ros_dependent/ring.hpp"
 
-void RemoveSparseRings(
-  std::unordered_map<int, std::vector<int>> & rings,
-  const int n_min_points)
+TEST(Ring, RingIsAvailable)
 {
-  for (auto it = rings.begin(); it != rings.end(); ) {
-    const auto & indices = it->second;
-    const int size = static_cast<int>(indices.size());
-    if (size < n_min_points) {
-      it = rings.erase(it);
-      continue;
-    }
-    it++;
-  }
+  const std::vector<sensor_msgs::msg::PointField> with_ring = {
+    sensor_msgs::msg::PointField()
+    .set__name("intensity").set__offset(16).set__datatype(7).set__count(1),
+    sensor_msgs::msg::PointField()
+    .set__name("ring").set__offset(20).set__datatype(4).set__count(1)
+  };
+  EXPECT_TRUE(RingIsAvailable(with_ring));
+
+  const std::vector<sensor_msgs::msg::PointField> without_ring = {
+    sensor_msgs::msg::PointField()
+    .set__name("intensity").set__offset(16).set__datatype(7).set__count(1)
+  };
+  EXPECT_FALSE(RingIsAvailable(without_ring));
 }

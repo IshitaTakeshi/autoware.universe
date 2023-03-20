@@ -41,10 +41,6 @@
 #include "lidar_feature_library/matrix_types.hpp"
 
 
-Matrix6d GetEigenCovariance(const std::array<double, 36> & covariance);
-
-std::array<double, 36> FromEigenCovariance(const Matrix6d & covariance);
-
 template<int N>
 Eigen::MatrixXd VectorsToEigen(const std::vector<Eigen::Matrix<double, N, 1>> & vectors)
 {

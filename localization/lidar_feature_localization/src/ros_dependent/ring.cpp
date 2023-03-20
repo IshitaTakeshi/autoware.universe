@@ -1,4 +1,4 @@
-// Copyright 2022 Tixiao Shan, Takeshi Ishita
+// Copyright 2023 The Autoware Contributors, Takeshi Ishita
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
@@ -10,7 +10,7 @@
 //      notice, this list of conditions and the following disclaimer in the
 //      documentation and/or other materials provided with the distribution.
 //
-//    * Neither the name of the Tixiao Shan, Takeshi Ishita nor the names of its
+//    * Neither the name of the Autoware Contributors, Takeshi Ishita nor the names of its
 //      contributors may be used to endorse or promote products derived from
 //      this software without specific prior written permission.
 //
@@ -26,23 +26,15 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
+#include "ros_dependent/ring.hpp"
 
-#include <unordered_map>
-#include <vector>
 
-#include "lidar_feature_extraction/ring.hpp"
-
-void RemoveSparseRings(
-  std::unordered_map<int, std::vector<int>> & rings,
-  const int n_min_points)
+bool RingIsAvailable(const std::vector<sensor_msgs::msg::PointField> & fields)
 {
-  for (auto it = rings.begin(); it != rings.end(); ) {
-    const auto & indices = it->second;
-    const int size = static_cast<int>(indices.size());
-    if (size < n_min_points) {
-      it = rings.erase(it);
-      continue;
+  for (const auto & field : fields) {
+    if (field.name == "ring") {
+      return true;
     }
-    it++;
   }
+  return false;
 }

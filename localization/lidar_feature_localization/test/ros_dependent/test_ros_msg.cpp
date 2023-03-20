@@ -1,4 +1,4 @@
-// Copyright 2022 Tixiao Shan, Takeshi Ishita
+// Copyright 2023 The Autoware Contributors, Takeshi Ishita
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
@@ -10,7 +10,7 @@
 //      notice, this list of conditions and the following disclaimer in the
 //      documentation and/or other materials provided with the distribution.
 //
-//    * Neither the name of the Tixiao Shan, Takeshi Ishita nor the names of its
+//    * Neither the name of the Autoware Contributors, Takeshi Ishita nor the names of its
 //      contributors may be used to endorse or promote products derived from
 //      this software without specific prior written permission.
 //
@@ -31,8 +31,44 @@
 
 #include <string>
 
-#include "lidar_feature_library/ros_msg.hpp"
+#include "ros_dependent/ros_msg.hpp"
 
+
+TEST(RosMsg, GetEigenCovariance)
+{
+  const std::array<double, 36ul> covarinace = {
+    0, 1, 2, 3, 4, 5,
+    6, 7, 8, 9, 10, 11,
+    12, 13, 14, 15, 16, 17,
+    18, 19, 20, 21, 22, 23,
+    24, 25, 26, 27, 28, 29,
+    30, 31, 32, 33, 34, 35
+  };
+
+  const Matrix6d C = GetEigenCovariance(covarinace);
+  EXPECT_EQ(C(0, 0), 0);
+  EXPECT_EQ(C(2, 0), 12);
+  EXPECT_EQ(C(3, 4), 22);
+  EXPECT_EQ(C(5, 2), 32);
+}
+
+TEST(RosMsg, FromEigenCovariance)
+{
+  Matrix6d C;
+  C <<
+    0, 1, 2, 3, 4, 5,
+    6, 7, 8, 9, 10, 11,
+    12, 13, 14, 15, 16, 17,
+    18, 19, 20, 21, 22, 23,
+    24, 25, 26, 27, 28, 29,
+    30, 31, 32, 33, 34, 35;
+
+  const std::array<double, 36ul> covarinace = FromEigenCovariance(C);
+  EXPECT_EQ(covarinace[0 * 6 + 0], 0);
+  EXPECT_EQ(covarinace[2 * 6 + 0], 12);
+  EXPECT_EQ(covarinace[3 * 6 + 4], 22);
+  EXPECT_EQ(covarinace[5 * 6 + 2], 32);
+}
 
 TEST(RosMsg, MakePoint)
 {

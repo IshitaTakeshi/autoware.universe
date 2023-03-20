@@ -41,15 +41,10 @@
 #include <unordered_map>
 #include <vector>
 
-#include <sensor_msgs/msg/point_cloud2.hpp>
-#include <sensor_msgs/msg/point_field.hpp>
-
 #include "cloud_iterator.hpp"
 #include "iterator.hpp"
 #include "mapped_points.hpp"
 
-
-bool RingIsAvailable(const std::vector<sensor_msgs::msg::PointField> & fields);
 
 template<typename T>
 struct AHasSmallerPolarAngleThanB

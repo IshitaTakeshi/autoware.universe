@@ -38,7 +38,6 @@
 #include <vector>
 
 #include <boost/range/adaptor/reversed.hpp>
-#include <rclcpp/rclcpp.hpp>
 
 #include "lidar_feature_extraction/algorithm.hpp"
 #include "lidar_feature_extraction/cloud_iterator.hpp"

@@ -49,6 +49,8 @@ PointcloudMapLoaderModule::PointcloudMapLoaderModule(
   pub_pointcloud_map_ =
     node->create_publisher<sensor_msgs::msg::PointCloud2>(publisher_name, durable_qos);
 
+  RCLCPP_INFO(logger_, "Loading PCD files");
+
   sensor_msgs::msg::PointCloud2 pcd;
   if (use_downsample) {
     const float leaf_size = node->declare_parameter<float>("leaf_size");
@@ -62,8 +64,12 @@ PointcloudMapLoaderModule::PointcloudMapLoaderModule(
     return;
   }
 
+  RCLCPP_INFO(logger_, "PCD files have been loaded");
+
   pcd.header.frame_id = "map";
   pub_pointcloud_map_->publish(pcd);
+
+  RCLCPP_INFO(logger_, "Published the PCD map");
 }
 
 sensor_msgs::msg::PointCloud2 PointcloudMapLoaderModule::loadPCDFiles(
@@ -74,15 +80,16 @@ sensor_msgs::msg::PointCloud2 PointcloudMapLoaderModule::loadPCDFiles(
 
   for (int i = 0; i < static_cast<int>(pcd_paths.size()); ++i) {
     auto & path = pcd_paths[i];
-    if (i % 50 == 0) {
-      RCLCPP_INFO_STREAM(
-        logger_,
-        fmt::format("Load {} ({} out of {})", path, i + 1, static_cast<int>(pcd_paths.size())));
-    }
+    RCLCPP_INFO_STREAM(
+      logger_,
+      fmt::format("Load {} ({} out of {})", path, i + 1, static_cast<int>(pcd_paths.size())));
 
     if (pcl::io::loadPCDFile(path, partial_pcd) == -1) {
       RCLCPP_ERROR_STREAM(logger_, "PCD load failed: " << path);
     }
+
+    RCLCPP_INFO(logger_,
+        "Loaded a point cloud of width, height = (%d, %d)", partial_pcd.width, partial_pcd.height);
 
     if (leaf_size) {
       partial_pcd = downsample(partial_pcd, leaf_size.get());

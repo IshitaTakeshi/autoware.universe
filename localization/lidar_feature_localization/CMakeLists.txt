@@ -14,18 +14,19 @@ set(CMAKE_CXX_OUTPUT_EXTENSION_REPLACE ON)
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_auto REQUIRED)
 find_package(fmt REQUIRED)
+find_package(PCL REQUIRED)
 
 ament_auto_find_build_dependencies()
 
-set(INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include)
+set(INCLUDE_DIRS
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  ${rotationlib_INCLUDE_DIRS})
 
 set(LIBRARY_SOURCE_FILES
   src/lib/algorithm.cpp
   src/lib/csv.cpp
   src/lib/eigen.cpp
-  src/lib/lib.cpp
   src/lib/pcl_utils.cpp
-  src/lib/ros_msg.cpp
   src/lib/random.cpp
   src/lib/stats.cpp)
 
@@ -54,11 +55,13 @@ set(EXTRACTION_SOURCE_FILES
   src/extraction/ring.cpp)
 
 set(ROS_DEPENDENT_SOURCE_FILES
-  src/ros_dependent/map_receiver.cpp)
+  src/ros_dependent/map_receiver.cpp
+  src/ros_dependent/ros_msg.cpp
+  src/ros_dependent/ring.cpp)
 
-ament_auto_add_library(library SHARED ${LIBRARY_SOURCE_FILES})
-ament_auto_add_library(localization SHARED ${LOCALIZATION_SOURCE_FILES})
-ament_auto_add_library(extraction SHARED ${EXTRACTION_SOURCE_FILES})
+add_library(library SHARED ${LIBRARY_SOURCE_FILES})
+add_library(localization SHARED ${LOCALIZATION_SOURCE_FILES})
+add_library(extraction SHARED ${EXTRACTION_SOURCE_FILES})
 ament_auto_add_library(ros_dependent SHARED ${ROS_DEPENDENT_SOURCE_FILES})
 
 target_include_directories(library PUBLIC ${INCLUDE_DIRS})
@@ -67,8 +70,8 @@ target_include_directories(extraction PUBLIC ${INCLUDE_DIRS})
 target_include_directories(ros_dependent PUBLIC ${INCLUDE_DIRS})
 
 target_link_libraries(library ${PCL_LIBRARIES} fmt)
-target_link_libraries(localization fmt)
-target_link_libraries(extraction fmt)
+target_link_libraries(localization ${PCL_LIBRARIES} fmt library)
+target_link_libraries(extraction ${PCL_LIBRARIES} fmt library)
 target_link_libraries(ros_dependent ${PCL_LIBRARIES})
 
 ament_auto_add_executable("lidar_feature_localization" app/localization.cpp)
@@ -184,7 +187,6 @@ if(BUILD_TESTING)
     test/lib/test_numeric.cpp
     test/lib/test_pcl_utils.cpp
     test/lib/test_random.cpp
-    test/lib/test_ros_msg.cpp
     test/lib/test_span.cpp
     test/lib/test_stats.cpp)
 
@@ -193,7 +195,9 @@ if(BUILD_TESTING)
   endforeach()
 
   set(ROS_DEPENDENT_TEST_FILES
-    test/ros_dependent/test_map_reciever.cpp)
+    test/ros_dependent/test_map_reciever.cpp
+    test/ros_dependent/test_ring.cpp
+    test/ros_dependent/test_ros_msg.cpp)
 
   foreach(filepath ${ROS_DEPENDENT_TEST_FILES})
     add_ros_dependent_testcase(${filepath})

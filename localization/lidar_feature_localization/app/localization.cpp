@@ -48,11 +48,9 @@
 
 #include "lidar_feature_extraction/edge_surface_extraction.hpp"
 #include "lidar_feature_extraction/hyper_parameter.hpp"
-#include "lidar_feature_extraction/ring.hpp"
 
 #include "lidar_feature_library/point_type.hpp"
 #include "lidar_feature_library/qos.hpp"
-#include "lidar_feature_library/ros_msg.hpp"
 #include "lidar_feature_library/warning.hpp"
 
 #include "lidar_feature_localization/debug.hpp"
@@ -60,6 +58,9 @@
 #include "lidar_feature_localization/matrix_type.hpp"
 #include "lidar_feature_localization/posevec.hpp"
 #include "lidar_feature_localization/stamp_sorted_objects.hpp"
+
+#include "ros_dependent/ring.hpp"
+#include "ros_dependent/ros_msg.hpp"
 
 using Odometry = nav_msgs::msg::Odometry;
 using PointCloud2 = sensor_msgs::msg::PointCloud2;

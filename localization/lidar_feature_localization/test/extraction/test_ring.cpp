@@ -128,23 +128,6 @@ TEST(AHasSmallerPolarAngleThanB, Random)
   }
 }
 
-TEST(Ring, RingIsAvailable)
-{
-  const std::vector<sensor_msgs::msg::PointField> with_ring = {
-    sensor_msgs::msg::PointField()
-    .set__name("intensity").set__offset(16).set__datatype(7).set__count(1),
-    sensor_msgs::msg::PointField()
-    .set__name("ring").set__offset(20).set__datatype(4).set__count(1)
-  };
-  EXPECT_TRUE(RingIsAvailable(with_ring));
-
-  const std::vector<sensor_msgs::msg::PointField> without_ring = {
-    sensor_msgs::msg::PointField()
-    .set__name("intensity").set__offset(16).set__datatype(7).set__count(1)
-  };
-  EXPECT_FALSE(RingIsAvailable(without_ring));
-}
-
 TEST(Ring, SortByAtan2)
 {
   std::vector<Point> points;

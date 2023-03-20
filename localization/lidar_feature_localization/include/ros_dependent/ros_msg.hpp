@@ -50,6 +50,9 @@
 
 #include "lidar_feature_library/matrix_types.hpp"
 
+Matrix6d GetEigenCovariance(const std::array<double, 36> & covariance);
+std::array<double, 36> FromEigenCovariance(const Matrix6d & covariance);
+
 template<typename T>
 sensor_msgs::msg::PointCloud2 ToRosMsg(const typename pcl::PointCloud<T>::Ptr & cloud_ptr)
 {
