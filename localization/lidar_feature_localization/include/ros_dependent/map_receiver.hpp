@@ -27,13 +27,13 @@
 class MapReceiver
 {
 public:
-  MapReceiver(std::shared_ptr<rclcpp::Node> node, const std::string & topic_name);
+  MapReceiver(rclcpp::Node * node, const std::string & topic_name);
 
   void Callback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr map_points_msg_ptr);
 
-  bool IsAvailable() const;
+  bool MapIsAvailable() const;
 
-  pcl::PointCloud<pcl::PointXYZ>::Ptr Get() const;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr MapPtr() const;
 
 private:
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr map_points_sub_;

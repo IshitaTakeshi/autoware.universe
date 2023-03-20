@@ -1,4 +1,5 @@
 <launch>
+  <arg name="input_map_points_topic" default="/pointcloud_map" />
   <arg name="rectified_scan_points_topic" default="/points_raw" description="Input rectified point cloud" />
   <arg name="edge_features_topic" default="/edge_features" description="Extracted edge features" />
   <arg name="surface_features_topic" default="/surface_features" description="Extracted surface features" />
@@ -9,6 +10,7 @@
   <arg name="input_service_trigger_node" default="trigger_node" description="Trigger node service name" />
 
   <node pkg="lidar_feature_localization" exec="lidar_feature_localization" name="$(var node_name)" output="log">
+    <remap from="pointcloud_map" to="$(var input_map_points_topic)"/>
     <remap from="points_raw" to="$(var rectified_scan_points_topic)"/>
     <remap from="edge_features" to="$(var edge_features_topic)"/>
     <remap from="surface_features" to="$(var surface_features_topic)"/>

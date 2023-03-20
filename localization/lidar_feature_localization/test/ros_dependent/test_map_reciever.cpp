@@ -41,8 +41,8 @@ TEST_F(MapTestSuite, MapReciever)
   auto pub_pose = node->create_publisher<sensor_msgs::msg::PointCloud2>(
     topic_name, rclcpp::QoS{1}.transient_local());
 
-  MapReceiver receiver(node, topic_name);
-  EXPECT_FALSE(receiver.IsAvailable());
+  MapReceiver receiver(node.get(), topic_name);
+  EXPECT_FALSE(receiver.MapIsAvailable());
 
   for (int i = 0; i < 20; ++i) {
     pub_pose->publish(ros_pointcloud);
@@ -50,8 +50,8 @@ TEST_F(MapTestSuite, MapReciever)
     rclcpp::sleep_for(std::chrono::milliseconds(100));
   }
 
-  EXPECT_TRUE(receiver.IsAvailable());
-  const auto received_cloud = receiver.Get();
-  EXPECT_GT(received_cloud->size(), 0U);
-  EXPECT_EQ(received_cloud->size(), pcl_pointcloud.size());
+  EXPECT_TRUE(receiver.MapIsAvailable());
+  const auto map_ptr = receiver.MapPtr();
+  EXPECT_GT(map_ptr->size(), 0U);
+  EXPECT_EQ(map_ptr->size(), pcl_pointcloud.size());
 }

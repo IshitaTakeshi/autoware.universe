@@ -19,7 +19,7 @@
 #include <string>
 
 
-MapReceiver::MapReceiver(std::shared_ptr<rclcpp::Node> node, const std::string & topic_name)
+MapReceiver::MapReceiver(rclcpp::Node * node, const std::string & topic_name)
 : map_points_sub_(
     node->create_subscription<sensor_msgs::msg::PointCloud2>(
       topic_name, rclcpp::QoS{1}.transient_local(),
@@ -33,12 +33,12 @@ void MapReceiver::Callback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr m
   pcl::fromROSMsg(*map_points_msg_ptr, *(this->map_points_ptr_));
 }
 
-bool MapReceiver::IsAvailable() const
+bool MapReceiver::MapIsAvailable() const
 {
   return this->map_points_ptr_->size() > 0;
 }
 
-pcl::PointCloud<pcl::PointXYZ>::Ptr MapReceiver::Get() const
+pcl::PointCloud<pcl::PointXYZ>::Ptr MapReceiver::MapPtr() const
 {
   return this->map_points_ptr_;
 }

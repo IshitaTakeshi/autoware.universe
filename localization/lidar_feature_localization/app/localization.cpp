@@ -59,6 +59,7 @@
 #include "lidar_feature_localization/posevec.hpp"
 #include "lidar_feature_localization/stamp_sorted_objects.hpp"
 
+#include "ros_dependent/map_receiver.hpp"
 #include "ros_dependent/ring.hpp"
 #include "ros_dependent/ros_msg.hpp"
 
@@ -139,15 +140,12 @@ template<typename PointType>
 class LocalizationNode : public rclcpp::Node
 {
 public:
-  LocalizationNode(
-    const pcl::PointCloud<pcl::PointXYZ>::Ptr & map)
+  LocalizationNode()
   : Node("lidar_feature_extraction"),
-    is_activated_(false),
+    service_is_activated_(false),
+    localizer_is_initialized_(false),
     params_(this),
-    edge_(std::make_shared<Edge>(map, params_.n_edge_neighbors)),
-    surface_(std::make_shared<Surface>(map, params_.n_surface_neighbors)),
-    debug_cloud_publisher_(this, edge_, surface_),
-    localizer_(edge_, surface_, params_.max_iter, params_.huber_k),
+    map_receiver_(this, std::string{"pointcloud_map"}),
     tf_broadcaster_(*this),
     warning_(this),
     extraction_(params_),
@@ -187,10 +185,31 @@ private:
     prior_poses_.Insert(msg_stamp_nanosec, GetIsometry3d(pose));
   }
 
+  bool TryInitLocalizer()
+  {
+    if (!map_receiver_.MapIsAvailable()) {
+      return false;
+    }
+
+    warning_.Warn("Received the point cloud map");
+    const auto map_ptr = map_receiver_.MapPtr();
+    const auto edge = std::make_shared<Edge>(map_ptr, params_.n_edge_neighbors);
+    const auto surface = std::make_shared<Surface>(map_ptr, params_.n_surface_neighbors);
+    debug_cloud_publisher_ = std::make_unique<DebugCloudPublisher>(this, edge, surface);
+    localizer_ = std::make_unique<Localizer>(edge, surface, params_.max_iter, params_.huber_k);
+    return true;
+  }
+
   void PointCloudCallback(const PointCloud2::ConstSharedPtr cloud_msg)
   {
     // activate the node only after receiving the activation signal
-    if (!is_activated_) {
+    if (!service_is_activated_) {
+      return;
+    }
+
+    if (!localizer_is_initialized_) {
+      localizer_is_initialized_ = this->TryInitLocalizer();
+      warning_.Info("The LOAM localizer has not been initialized");
       return;
     }
 
@@ -220,11 +239,11 @@ private:
     const auto [prior_stamp_nanosec, prior] = prior_poses_.GetClosest(msg_stamp_nanosec);
     prior_poses_.RemoveOlderThan(msg_stamp_nanosec + 1e9);  // 1e9 msg_stamp_nanosec = 1s
 
-    localizer_.Init(prior);
-    localizer_.Update(std::make_tuple(edge, surface));
-    const Eigen::Isometry3d pose = localizer_.Get();
+    localizer_->Init(prior);
+    localizer_->Update(std::make_tuple(edge, surface));
+    const Eigen::Isometry3d pose = localizer_->Get();
 
-    debug_cloud_publisher_.Publish(stamp, pose, edge, surface);
+    debug_cloud_publisher_->Publish(stamp, pose, edge, surface);
 
     pose_publisher_->publish(MakePoseStamped(pose, stamp, map_frame));
 
@@ -242,17 +261,17 @@ private:
     const std_srvs::srv::SetBool::Request::SharedPtr req,
     std_srvs::srv::SetBool::Response::SharedPtr res)
   {
-    is_activated_ = req->data;
+    service_is_activated_ = req->data;
     res->success = true;
     warning_.Info("LOAM is activated");
   }
 
-  bool is_activated_;
+  bool service_is_activated_;
+  bool localizer_is_initialized_;
   const HyperParameters params_;
-  const std::shared_ptr<Edge> edge_;
-  const std::shared_ptr<Surface> surface_;
-  const DebugCloudPublisher debug_cloud_publisher_;
-  Localizer localizer_;
+  const MapReceiver map_receiver_;
+  std::unique_ptr<DebugCloudPublisher> debug_cloud_publisher_;
+  std::unique_ptr<Localizer> localizer_;
   tf2_ros::TransformBroadcaster tf_broadcaster_;
   StampSortedObjects<Eigen::Isometry3d> prior_poses_;
   const Warning warning_;
@@ -264,42 +283,11 @@ private:
   const rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr service_trigger_;
 };
 
-bool CheckMapPathExists(const std::string & map_path)
-{
-  bool exists = rcpputils::fs::exists(map_path);
-  if (!exists) {
-    RCLCPP_ERROR(
-      rclcpp::get_logger("lidar_feature_localization"),
-      "Map %s does not exist!", map_path.c_str());
-  }
-  return exists;
-}
-
-pcl::PointCloud<pcl::PointXYZ>::Ptr LoadPointCloud(const std::string & path)
-{
-  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>());
-  const int loaded = pcl::io::loadPCDFile(path, *cloud);
-  if (loaded != 0) {
-    RCLCPP_ERROR(
-      rclcpp::get_logger("lidar_feature_localization"),
-      "Failed to load %s", path.c_str());
-  }
-  return cloud;
-}
-
 int main(int argc, char * argv[])
 {
-  const std::string map_path = "/map/pointcloud_map.pcd";
-
-  if (!CheckMapPathExists(map_path)) {
-    return -1;
-  }
-
-  const auto map = LoadPointCloud(map_path);
-
   using Node = LocalizationNode<PointXYZIRADT>;
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<Node>(map));
+  rclcpp::spin(std::make_shared<Node>());
   rclcpp::shutdown();
   return 0;
 }
