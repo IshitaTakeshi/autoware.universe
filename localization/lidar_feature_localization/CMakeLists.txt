@@ -77,43 +77,14 @@ target_link_libraries(ros_dependent ${PCL_LIBRARIES})
 ament_auto_add_executable("lidar_feature_localization" app/localization.cpp)
 target_link_libraries("lidar_feature_localization" library localization extraction ros_dependent)
 
-function(add_localization_testcase filepath)
-  get_filename_component(filename ${filepath} NAME)
-  string(REGEX REPLACE ".cpp" "" test_name_suffix ${filename})
-  set(test_name "localization_${test_name_suffix}")
+function(add_testcase filepath linked_libraries)
+  string(REGEX REPLACE ".cpp" "" test_name ${filepath})
+  string(REGEX REPLACE "/" "_" test_name ${test_name})
 
   ament_add_gmock(${test_name} ${filepath})
-  target_link_libraries(${test_name} library localization)
-  ament_target_dependencies(${test_name} ${${PROJECT_NAME}_FOUND_BUILD_DEPENDS})
-endfunction()
 
-function(add_extraction_testcase filepath)
-  get_filename_component(filename ${filepath} NAME)
-  string(REGEX REPLACE ".cpp" "" test_name_suffix ${filename})
-  set(test_name "extraction_${test_name_suffix}")
+  target_link_libraries(${test_name} ${linked_libraries})
 
-  ament_add_gmock(${test_name} ${filepath})
-  target_link_libraries("${test_name}" library extraction)
-  ament_target_dependencies(${test_name} ${${PROJECT_NAME}_FOUND_BUILD_DEPENDS})
-endfunction()
-
-function(add_lib_testcase filepath)
-  get_filename_component(filename ${filepath} NAME)
-  string(REGEX REPLACE ".cpp" "" test_name_suffix ${filename})
-  set(test_name "lib_${test_name_suffix}")
-
-  ament_add_gmock(${test_name} ${filepath})
-  target_link_libraries("${test_name}" library)
-  ament_target_dependencies(${test_name} ${${PROJECT_NAME}_FOUND_BUILD_DEPENDS})
-endfunction()
-
-function(add_ros_dependent_testcase filepath)
-  get_filename_component(filename ${filepath} NAME)
-  string(REGEX REPLACE ".cpp" "" test_name_suffix ${filename})
-  set(test_name "ros_dependent_${test_name_suffix}")
-
-  ament_add_gmock(${test_name} ${filepath})
-  target_link_libraries("${test_name}" ros_dependent)
   ament_target_dependencies(${test_name} ${${PROJECT_NAME}_FOUND_BUILD_DEPENDS})
 endfunction()
 
@@ -154,7 +125,7 @@ if(BUILD_TESTING)
     test/localization/test_velocity_integration.cpp)
 
   foreach(filepath ${LOCALIZATION_TEST_FILES})
-    add_localization_testcase(${filepath})
+    add_testcase(${filepath} "library;localization")
   endforeach()
 
   set(EXTRACTION_TEST_FILES
@@ -176,7 +147,7 @@ if(BUILD_TESTING)
     test/extraction/test_index_range.cpp)
 
   foreach(filepath ${EXTRACTION_TEST_FILES})
-    add_extraction_testcase(${filepath})
+    add_testcase(${filepath} "library;extraction")
   endforeach()
 
   set(LIB_TEST_FILES
@@ -191,7 +162,7 @@ if(BUILD_TESTING)
     test/lib/test_stats.cpp)
 
   foreach(filepath ${LIB_TEST_FILES})
-    add_lib_testcase(${filepath})
+    add_testcase(${filepath} "library")
   endforeach()
 
   set(ROS_DEPENDENT_TEST_FILES
@@ -200,7 +171,7 @@ if(BUILD_TESTING)
     test/ros_dependent/test_ros_msg.cpp)
 
   foreach(filepath ${ROS_DEPENDENT_TEST_FILES})
-    add_ros_dependent_testcase(${filepath})
+    add_testcase(${filepath} "ros_dependent")
   endforeach()
 endif()
 
