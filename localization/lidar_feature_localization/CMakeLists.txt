@@ -53,20 +53,26 @@ set(EXTRACTION_SOURCE_FILES
   src/extraction/math.cpp
   src/extraction/ring.cpp)
 
+set(ROS_DEPENDENT_SOURCE_FILES
+  src/ros_dependent/map_receiver.cpp)
+
 ament_auto_add_library(library SHARED ${LIBRARY_SOURCE_FILES})
 ament_auto_add_library(localization SHARED ${LOCALIZATION_SOURCE_FILES})
 ament_auto_add_library(extraction SHARED ${EXTRACTION_SOURCE_FILES})
+ament_auto_add_library(ros_dependent SHARED ${ROS_DEPENDENT_SOURCE_FILES})
 
 target_include_directories(library PUBLIC ${INCLUDE_DIRS})
 target_include_directories(localization PUBLIC ${INCLUDE_DIRS})
 target_include_directories(extraction PUBLIC ${INCLUDE_DIRS})
+target_include_directories(ros_dependent PUBLIC ${INCLUDE_DIRS})
 
 target_link_libraries(library ${PCL_LIBRARIES} fmt)
 target_link_libraries(localization fmt)
 target_link_libraries(extraction fmt)
+target_link_libraries(ros_dependent ${PCL_LIBRARIES})
 
 ament_auto_add_executable("lidar_feature_localization" app/localization.cpp)
-target_link_libraries("lidar_feature_localization" library localization extraction)
+target_link_libraries("lidar_feature_localization" library localization extraction ros_dependent)
 
 function(add_localization_testcase filepath)
   get_filename_component(filename ${filepath} NAME)
@@ -97,6 +103,17 @@ function(add_lib_testcase filepath)
   target_link_libraries("${test_name}" library)
   ament_target_dependencies(${test_name} ${${PROJECT_NAME}_FOUND_BUILD_DEPENDS})
 endfunction()
+
+function(add_ros_dependent_testcase filepath)
+  get_filename_component(filename ${filepath} NAME)
+  string(REGEX REPLACE ".cpp" "" test_name_suffix ${filename})
+  set(test_name "ros_dependent_${test_name_suffix}")
+
+  ament_add_gmock(${test_name} ${filepath})
+  target_link_libraries("${test_name}" ros_dependent)
+  ament_target_dependencies(${test_name} ${${PROJECT_NAME}_FOUND_BUILD_DEPENDS})
+endfunction()
+
 
 if(BUILD_TESTING)
   file(GLOB
@@ -173,6 +190,13 @@ if(BUILD_TESTING)
 
   foreach(filepath ${LIB_TEST_FILES})
     add_lib_testcase(${filepath})
+  endforeach()
+
+  set(ROS_DEPENDENT_TEST_FILES
+    test/ros_dependent/test_map_reciever.cpp)
+
+  foreach(filepath ${ROS_DEPENDENT_TEST_FILES})
+    add_ros_dependent_testcase(${filepath})
   endforeach()
 endif()
 
