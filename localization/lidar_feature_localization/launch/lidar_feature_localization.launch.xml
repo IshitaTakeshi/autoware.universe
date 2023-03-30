@@ -9,7 +9,7 @@
   <arg name="node_name" default="lidar_feature_localization" />
   <arg name="input_service_trigger_node" default="trigger_node" description="Trigger node service name" />
 
-  <node pkg="lidar_feature_localization" exec="lidar_feature_localization" name="$(var node_name)" output="log">
+  <node pkg="lidar_feature_localization" exec="lidar_feature_localization_node" name="lidar_feature_localization">
     <remap from="pointcloud_map" to="$(var input_map_points_topic)"/>
     <remap from="points_raw" to="$(var rectified_scan_points_topic)"/>
     <remap from="edge_features" to="$(var edge_features_topic)"/>

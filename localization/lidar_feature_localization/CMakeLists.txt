@@ -74,8 +74,13 @@ target_link_libraries(localization ${PCL_LIBRARIES} fmt library)
 target_link_libraries(extraction ${PCL_LIBRARIES} fmt library)
 target_link_libraries(ros_dependent ${PCL_LIBRARIES})
 
-ament_auto_add_executable("lidar_feature_localization" app/localization.cpp)
-target_link_libraries("lidar_feature_localization" library localization extraction ros_dependent)
+ament_auto_add_library(lidar_feature_localization SHARED app/localization.cpp)
+target_link_libraries(lidar_feature_localization library localization extraction ros_dependent)
+
+rclcpp_components_register_node(lidar_feature_localization
+  PLUGIN "LidarFeatureLocalizationNode"
+  EXECUTABLE lidar_feature_localization_node
+)
 
 function(add_testcase filepath linked_libraries)
   string(REGEX REPLACE ".cpp" "" test_name ${filepath})

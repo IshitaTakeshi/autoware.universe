@@ -31,6 +31,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <rcpputils/filesystem_helper.hpp>
+#include <rclcpp_components/register_node_macro.hpp>
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -136,12 +137,13 @@ private:
   const rclcpp::Publisher<PointCloud2>::SharedPtr target_surface_publisher_;
 };
 
-template<typename PointType>
-class LocalizationNode : public rclcpp::Node
+class LidarFeatureLocalizationNode : public rclcpp::Node
 {
 public:
-  LocalizationNode()
-  : Node("lidar_feature_extraction"),
+  using PointType = PointXYZIRADT;  // modify this when using a different point message type
+
+  explicit LidarFeatureLocalizationNode(const rclcpp::NodeOptions & options)
+  : Node("lidar_feature_localization_node", options),
     service_is_activated_(false),
     localizer_is_initialized_(false),
     params_(this),
@@ -152,11 +154,15 @@ public:
     cloud_subscriber_(
       this->create_subscription<PointCloud2>(
         "points_raw", QOS_BEST_EFFORT_VOLATILE,
-        std::bind(&LocalizationNode::PointCloudCallback, this, std::placeholders::_1))),
+        std::bind(
+          &LidarFeatureLocalizationNode::PointCloudCallback,
+          this, std::placeholders::_1))),
     optimization_start_pose_subscriber_(
       this->create_subscription<PoseStamped>(
         "optimization_start_pose", QOS_BEST_EFFORT_VOLATILE,
-        std::bind(&LocalizationNode::OptimizationStartPoseCallback, this, std::placeholders::_1))),
+        std::bind(
+          &LidarFeatureLocalizationNode::OptimizationStartPoseCallback,
+          this, std::placeholders::_1))),
     pose_publisher_(this->create_publisher<PoseStamped>("estimated_pose", 10)),
     pose_with_covariance_publisher_(
       this->create_publisher<PoseWithCovarianceStamped>("estimated_pose_with_covariance", 10)),
@@ -164,13 +170,14 @@ public:
       this->create_service<std_srvs::srv::SetBool>(
         "trigger_node_srv",
         std::bind(
-          &LocalizationNode::ServiceTrigger, this, std::placeholders::_1, std::placeholders::_2),
+          &LidarFeatureLocalizationNode::ServiceTrigger,
+          this, std::placeholders::_1, std::placeholders::_2),
         rclcpp::ServicesQoS().get_rmw_qos_profile()))
   {
     pcl::console::setVerbosityLevel(pcl::console::L_ERROR);
   }
 
-  ~LocalizationNode() {}
+  ~LidarFeatureLocalizationNode() {}
 
 private:
   void OptimizationStartPoseCallback(const PoseStamped::ConstSharedPtr stamped_pose)
@@ -181,7 +188,6 @@ private:
   void SetOptimizationStartPose(const rclcpp::Time & stamp, const Pose & pose)
   {
     const double msg_stamp_nanosec = Nanoseconds(stamp);
-    warning_.Info(fmt::format("Received a prior pose of time {}", msg_stamp_nanosec));
     prior_poses_.Insert(msg_stamp_nanosec, GetIsometry3d(pose));
   }
 
@@ -283,11 +289,4 @@ private:
   const rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr service_trigger_;
 };
 
-int main(int argc, char * argv[])
-{
-  using Node = LocalizationNode<PointXYZIRADT>;
-  rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<Node>());
-  rclcpp::shutdown();
-  return 0;
-}
+RCLCPP_COMPONENTS_REGISTER_NODE(LidarFeatureLocalizationNode)
