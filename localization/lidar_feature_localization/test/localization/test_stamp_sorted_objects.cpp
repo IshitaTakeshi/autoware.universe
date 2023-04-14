@@ -1,4 +1,4 @@
-// Copyright 2022 Tixiao Shan, Takeshi Ishita
+// Copyright 2022 The Autoware Contributors, Takeshi Ishita
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
@@ -10,7 +10,7 @@
 //      notice, this list of conditions and the following disclaimer in the
 //      documentation and/or other materials provided with the distribution.
 //
-//    * Neither the name of the Tixiao Shan, Takeshi Ishita nor the names of its
+//    * Neither the name of the Autoware Contributors, Takeshi Ishita nor the names of its
 //      contributors may be used to endorse or promote products derived from
 //      this software without specific prior written permission.
 //
@@ -34,7 +34,7 @@
 #include "lidar_feature_localization/stamp_sorted_objects.hpp"
 
 
-TEST(StampSortedObjects, GetClosest)
+TEST(GetClosest, SmokeTest)
 {
   StampSortedObjects<std::string> q;
   q.Insert(1.0, std::string{"a"});
@@ -55,7 +55,7 @@ TEST(StampSortedObjects, GetClosest)
   EXPECT_EQ(q.GetClosest(5.0), std::make_tuple(4.0, "d"));
 }
 
-TEST(StampSortedObjects, GetLast)
+TEST(GetLast, SmokeTest)
 {
   StampSortedObjects<std::string> q;
 
@@ -72,28 +72,91 @@ TEST(StampSortedObjects, GetLast)
   EXPECT_EQ(q.GetLast(), std::make_tuple(4.0, "d"));
 }
 
-TEST(StampSortedObjects, RemoveOlderThan)
+TEST(RemoveLargerThan, SmokeTest)
 {
   StampSortedObjects<std::string> q;
   q.Insert(1.0, std::string{"a"});
   q.Insert(2.0, std::string{"b"});
   q.Insert(3.0, std::string{"c"});
   q.Insert(4.0, std::string{"d"});
+  q.Insert(5.0, std::string{"e"});
+  q.Insert(6.0, std::string{"f"});
 
-  q.RemoveOlderThan(4.0);
+  q.RemoveLargerThan(6.0);
 
-  ASSERT_EQ(q.Size(), static_cast<size_t>(4));  // nothing removed
+  EXPECT_EQ(q.Size(), 6U);  // nothing removed
 
-  q.RemoveOlderThan(3.0);
+  q.RemoveLargerThan(4.0);
 
-  ASSERT_EQ(q.Size(), static_cast<size_t>(3));
+  EXPECT_EQ(q.Size(), 4U);
 
   EXPECT_EQ(q.GetClosest(1.0), std::make_tuple(1.0, "a"));
   EXPECT_EQ(q.GetClosest(2.0), std::make_tuple(2.0, "b"));
   EXPECT_EQ(q.GetClosest(3.0), std::make_tuple(3.0, "c"));
+  EXPECT_EQ(q.GetClosest(4.0), std::make_tuple(4.0, "d"));
+
+  q.RemoveLargerThan(2.5);
+
+  EXPECT_EQ(q.Size(), 2U);
+
+  EXPECT_EQ(q.GetClosest(1.0), std::make_tuple(1.0, "a"));
+  EXPECT_EQ(q.GetClosest(2.0), std::make_tuple(2.0, "b"));
 }
 
-TEST(StampSortedObjects, GetPrev)
+TEST(RemoveLargerThan, WorksForEmptyObjects)
+{
+  StampSortedObjects<std::string> q;
+
+  EXPECT_EQ(q.Size(), 0U);
+
+  q.RemoveLargerThan(4.0);  // make sure this doesn't segfault
+
+  EXPECT_EQ(q.Size(), 0U);
+}
+
+TEST(RemoveSmallerThan, SmokeTest)
+{
+  StampSortedObjects<std::string> q;
+  q.Insert(1.0, std::string{"a"});
+  q.Insert(2.0, std::string{"b"});
+  q.Insert(3.0, std::string{"c"});
+  q.Insert(4.0, std::string{"d"});
+  q.Insert(5.0, std::string{"e"});
+  q.Insert(6.0, std::string{"f"});
+
+  q.RemoveSmallerThan(1.0);
+
+  EXPECT_EQ(q.Size(), 6U);  // nothing removed
+
+  q.RemoveSmallerThan(3.0);
+
+  EXPECT_EQ(q.Size(), 4U);
+
+  EXPECT_EQ(q.GetClosest(3.0), std::make_tuple(3.0, "c"));
+  EXPECT_EQ(q.GetClosest(4.0), std::make_tuple(4.0, "d"));
+  EXPECT_EQ(q.GetClosest(5.0), std::make_tuple(5.0, "e"));
+  EXPECT_EQ(q.GetClosest(6.0), std::make_tuple(6.0, "f"));
+
+  q.RemoveSmallerThan(4.5);
+
+  EXPECT_EQ(q.Size(), 2U);
+
+  EXPECT_EQ(q.GetClosest(5.0), std::make_tuple(5.0, "e"));
+  EXPECT_EQ(q.GetClosest(6.0), std::make_tuple(6.0, "f"));
+}
+
+TEST(RemoveSmallerThan, WorksForEmptyObjects)
+{
+  StampSortedObjects<std::string> q;
+
+  EXPECT_EQ(q.Size(), 0U);
+
+  q.RemoveSmallerThan(4.0);  // make sure this doesn't segfault
+
+  EXPECT_EQ(q.Size(), 0U);
+}
+
+TEST(GetPrev, SmokeTest)
 {
   StampSortedObjects<std::string> q;
   q.Insert(1.0, std::string{"a"});
@@ -121,7 +184,7 @@ TEST(StampSortedObjects, GetPrev)
   );
 }
 
-TEST(StampSortedObjects, GetNext)
+TEST(GetNext, SmokeTest)
 {
   StampSortedObjects<std::string> q;
   q.Insert(1.0, std::string{"a"});

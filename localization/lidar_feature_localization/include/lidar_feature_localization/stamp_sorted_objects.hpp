@@ -1,4 +1,4 @@
-// Copyright 2022 Tixiao Shan, Takeshi Ishita
+// Copyright 2022 The Autoware Contributors, Takeshi Ishita
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
@@ -10,7 +10,7 @@
 //      notice, this list of conditions and the following disclaimer in the
 //      documentation and/or other materials provided with the distribution.
 //
-//    * Neither the name of the Tixiao Shan, Takeshi Ishita nor the names of its
+//    * Neither the name of the Autoware Contributors, Takeshi Ishita nor the names of its
 //      contributors may be used to endorse or promote products derived from
 //      this software without specific prior written permission.
 //
@@ -34,7 +34,6 @@
 #include <map>
 #include <mutex>
 #include <tuple>
-
 
 template<typename Object>
 class StampSortedObjects
@@ -131,7 +130,7 @@ public:
     return objects_.size();
   }
 
-  void RemoveOlderThan(const double timestamp)
+  void RemoveLargerThan(const double timestamp)
   {
     std::lock_guard<std::mutex> guard(mutex_);
 
@@ -142,14 +141,21 @@ public:
       return;
     }
 
-    const auto boundary = std::prev(g);
+    objects_.erase(g, objects_.end());
+  }
 
-    auto curr = std::prev(objects_.end());
-    while (curr != boundary) {
-      auto prev = std::prev(curr);
-      objects_.erase(curr);
-      curr = prev;
+  void RemoveSmallerThan(const double timestamp)
+  {
+    std::lock_guard<std::mutex> guard(mutex_);
+
+    // g is the first element in map that satisfies timestamp <= g
+    const auto g = objects_.lower_bound(timestamp);
+
+    if (g == objects_.begin()) {
+      return;
     }
+
+    objects_.erase(objects_.begin(), g);
   }
 
 private:

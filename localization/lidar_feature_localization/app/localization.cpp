@@ -237,7 +237,7 @@ private:
 
     const double msg_stamp_nanosec = Nanoseconds(stamp);
     const auto [prior_stamp_nanosec, prior] = prior_poses_.GetClosest(msg_stamp_nanosec);
-    // prior_poses_.RemoveOlderThan(msg_stamp_nanosec + 1e9);  // 1e9 msg_stamp_nanosec = 1s
+    prior_poses_.RemoveSmallerThan(msg_stamp_nanosec - 10e9);  // 10e9 nanosec = 10s
 
     localizer_->Init(prior);
     localizer_->Update(std::make_tuple(edge, surface));
